@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Home - CampusConnect</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 2rem; background: #f0f2f5; }
+        .wrap { max-width: 900px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+        h1 { margin: 0; color: #1a1a1a; font-size: 1.75rem; }
+        .card { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .card p { margin: 0; color: #333; line-height: 1.5; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        .btn-login { background: #1877f2; color: #fff !important; border-radius: 8px; padding: 8px 16px; font-weight: 600; }
+        .btn-login:hover { background: #166fe5; color: #fff; text-decoration: none; }
+        .nav-links a { color: #1877f2; font-weight: 500; text-decoration: none; padding: 8px 16px; border-radius: 8px; }
+        .nav-links a:hover { text-decoration: underline; }
+        .user-msg { color: #666; margin-right: 8px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <header class="header">
+            <h1>CampusConnect</h1>
+            <nav class="nav-links">
+                <span class="user-msg" th:if="${loggedIn}" th:text="'Hello, ' + ${username}"></span>
+                <a th:if="${loggedIn}" th:href="@{/logout}">Log out</a>
+                <a th:unless="${loggedIn}" href="/login" class="btn-login">Log in or Sign up</a>
+            </nav>
+        </header>
+        <main class="card">
+            <p>Welcome to CampusConnect — buy and sell items on campus, and register or claim lost items.</p>
+        </main>
+    </div>
+</body>
+</html>

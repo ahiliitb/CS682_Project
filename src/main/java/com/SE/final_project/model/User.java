@@ -1,9 +1,6 @@
 package com.SE.final_project.model;
 import jakarta.persistence.*;
 
-
-import org.springframework.data.annotation.Id;
-
 @Entity
 @Table(name = "users")
 public class User {

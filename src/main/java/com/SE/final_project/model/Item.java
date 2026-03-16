@@ -23,10 +23,10 @@ public class Item {
 
     private LocalDateTime createdAt;
 
-    // Store multiple photo URLs
+    // Store multiple photo URLs (separate table to avoid conflict with ItemPhoto entity)
     @ElementCollection
     @CollectionTable(
-        name = "item_photos",
+        name = "item_photo_urls",
         joinColumns = @JoinColumn(name = "item_id")
     )
     @Column(name = "photo_url")

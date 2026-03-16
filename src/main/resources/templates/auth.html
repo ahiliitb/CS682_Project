@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in or Sign up - CampusConnect</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f0f2f5; }
+        .card { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); width: 100%; max-width: 420px; }
+        h2 { margin: 0 0 1.5rem; color: #1a1a1a; font-size: 1.5rem; }
+        .tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 1px solid #ddd; }
+        .tabs a { padding: 0.75rem 1.25rem; color: #666; text-decoration: none; font-weight: 500; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+        .tabs a:hover { color: #1877f2; }
+        .tabs a.active { color: #1877f2; border-bottom-color: #1877f2; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.35rem; font-weight: 500; color: #333; }
+        input { width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+        input:focus { outline: none; border-color: #1877f2; }
+        button { width: 100%; padding: 0.75rem; background: #1877f2; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem; }
+        button:hover { background: #166fe5; }
+        .message { padding: 0.6rem; border-radius: 8px; margin-bottom: 1rem; }
+        .error { background: #fee; color: #c00; }
+        .success { background: #efe; color: #060; }
+        .back { text-align: center; margin-top: 1.25rem; }
+        .back a { color: #1877f2; text-decoration: none; font-weight: 500; }
+        .back a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>CampusConnect</h2>
+        <p th:if="${message}" class="message success" th:text="${message}"></p>
+        <p th:if="${error}" class="message error" th:text="${error}"></p>
+        <nav class="tabs">
+            <a href="#" id="tab-login" class="active">Log in</a>
+            <a href="#" id="tab-signup">Sign up</a>
+        </nav>
+        <div id="panel-login" class="panel active">
+            <form th:action="@{/login}" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" placeholder="Your username">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Your password">
+                </div>
+                <button type="submit">Log in</button>
+            </form>
+        </div>
+        <div id="panel-signup" class="panel">
+            <form th:action="@{/signup}" method="post">
+                <div class="form-group">
+                    <label for="su-username">Username</label>
+                    <input type="text" id="su-username" name="username" required autocomplete="username" placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label for="su-email">Email</label>
+                    <input type="email" id="su-email" name="email" required autocomplete="email" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="su-password">Password</label>
+                    <input type="password" id="su-password" name="password" required minlength="4" autocomplete="new-password" placeholder="At least 4 characters">
+                </div>
+                <div class="form-group">
+                    <label for="su-confirm">Confirm password</label>
+                    <input type="password" id="su-confirm" name="confirmPassword" required minlength="4" autocomplete="new-password" placeholder="Repeat password">
+                </div>
+                <button type="submit">Sign up</button>
+            </form>
+        </div>
+        <p class="back"><a th:href="@{/}">Back to home</a></p>
+    </div>
+    <script>
+        (function() {
+            var tabLogin = document.getElementById('tab-login');
+            var tabSignup = document.getElementById('tab-signup');
+            var panelLogin = document.getElementById('panel-login');
+            var panelSignup = document.getElementById('panel-signup');
+            var showSignup = window.location.search.indexOf('tab=signup') !== -1;
+            function showPanel(panel) {
+                panelLogin.classList.remove('active');
+                panelSignup.classList.remove('active');
+                tabLogin.classList.remove('active');
+                tabSignup.classList.remove('active');
+                if (panel === 'signup') {
+                    panelSignup.classList.add('active');
+                    tabSignup.classList.add('active');
+                } else {
+                    panelLogin.classList.add('active');
+                    tabLogin.classList.add('active');
+                }
+            }
+            if (showSignup) showPanel('signup');
+            tabLogin.onclick = function(e) { e.preventDefault(); showPanel('login'); };
+            tabSignup.onclick = function(e) { e.preventDefault(); showPanel('signup'); };
+        })();
+    </script>
+</body>
+</html>
