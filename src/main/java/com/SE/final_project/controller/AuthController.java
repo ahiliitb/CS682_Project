@@ -27,10 +27,10 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String authPage(@AuthenticationPrincipal UserDetails userDetails,
-                           @RequestParam(value = "logout", required = false) String logout,
-                           @RequestParam(value = "error", required = false) String error,
-                           Model model) {
+    public String loginPage(@AuthenticationPrincipal UserDetails userDetails,
+                            @RequestParam(value = "logout", required = false) String logout,
+                            @RequestParam(value = "error", required = false) String error,
+                            Model model) {
         if (userDetails != null) {
             return "redirect:/";
         }
@@ -40,15 +40,23 @@ public class AuthController {
         if (error != null) {
             model.addAttribute("error", "Invalid username or password.");
         }
-        return "auth";
+        return "login";
     }
 
-    @GetMapping({ "/signup", "/register" })
-    public String authPageSignup(@AuthenticationPrincipal UserDetails userDetails) {
+    @GetMapping("/register")
+    public String registerPage(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         if (userDetails != null) {
             return "redirect:/";
         }
-        return "redirect:/login?tab=signup";
+        return "Registration Page";
+    }
+
+    @GetMapping("/signup")
+    public String signupRedirect(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails != null) {
+            return "redirect:/";
+        }
+        return "redirect:/register";
     }
 
     @PostMapping("/signup")
@@ -59,27 +67,27 @@ public class AuthController {
                          RedirectAttributes redirectAttributes) {
         if (username == null || username.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Username is required.");
-            return "redirect:/login?tab=signup";
+            return "redirect:/register";
         }
         if (email == null || email.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email is required.");
-            return "redirect:/login?tab=signup";
+            return "redirect:/register";
         }
         if (password == null || password.length() < 4) {
             redirectAttributes.addFlashAttribute("error", "Password must be at least 4 characters.");
-            return "redirect:/login?tab=signup";
+            return "redirect:/register";
         }
         if (!password.equals(confirmPassword)) {
             redirectAttributes.addFlashAttribute("error", "Passwords do not match.");
-            return "redirect:/login?tab=signup";
+            return "redirect:/register";
         }
         if (userRepository.existsByUsername(username)) {
             redirectAttributes.addFlashAttribute("error", "Username already taken.");
-            return "redirect:/login?tab=signup";
+            return "redirect:/register";
         }
         if (userRepository.existsByEmail(email)) {
             redirectAttributes.addFlashAttribute("error", "Email already registered.");
-            return "redirect:/login?tab=signup";
+            return "redirect:/register";
         }
 
         User user = new User();

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - CampusConnect</title>
+    <title>Registration Page - CampusConnect</title>
     <style>
         * { box-sizing: border-box; }
         body { font-family: system-ui, -apple-system, sans-serif; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f0f2f5; }
@@ -18,29 +18,36 @@
         .message { padding: 0.6rem; border-radius: 8px; margin-bottom: 1rem; }
         .error { background: #fee; color: #c00; }
         .success { background: #efe; color: #060; }
-        .link { text-align: center; margin-top: 1rem; }
+        .link { text-align: center; margin-top: 1.25rem; }
         .link a { color: #1877f2; text-decoration: none; font-weight: 500; }
         .link a:hover { text-decoration: underline; }
-        .signup-link { font-weight: 600; font-size: 1.05rem; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Log in to CampusConnect</h2>
+        <h2>Registration Page</h2>
         <p th:if="${message}" class="message success" th:text="${message}"></p>
         <p th:if="${error}" class="message error" th:text="${error}"></p>
-        <form th:action="@{/login}" method="post">
+        <form th:action="@{/signup}" method="post">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required autocomplete="username" placeholder="Your username">
+                <input type="text" id="username" name="username" required autocomplete="username" placeholder="Choose a username">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required autocomplete="email" placeholder="your@email.com">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Your password">
+                <input type="password" id="password" name="password" required minlength="4" autocomplete="new-password" placeholder="At least 4 characters">
             </div>
-            <button type="submit">Log in</button>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required minlength="4" autocomplete="new-password" placeholder="Repeat password">
+            </div>
+            <button type="submit">Register</button>
         </form>
-        <p class="link">Don't have an account? <a th:href="@{/register}" class="signup-link">Register</a></p>
+        <p class="link">Already have an account? <a th:href="@{/login}">Log in</a></p>
         <p class="link"><a th:href="@{/}">Back to home</a></p>
     </div>
 </body>
