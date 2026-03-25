@@ -73,6 +73,10 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("error", "Email is required.");
             return "redirect:/register";
         }
+        if (!email.toLowerCase().endsWith("@iitb.ac.in")) {
+            redirectAttributes.addFlashAttribute("error", "Only IIT Bombay email addresses (@iitb.ac.in) are allowed.");
+            return "redirect:/register";
+        }
         if (password == null || password.length() < 4) {
             redirectAttributes.addFlashAttribute("error", "Password must be at least 4 characters.");
             return "redirect:/register";
@@ -102,10 +106,45 @@ public class AuthController {
 
     @GetMapping("/")
     public String home(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("loggedIn", userDetails != null);
         if (userDetails != null) {
-            model.addAttribute("username", userDetails.getUsername());
+            return "redirect:/dashboard";
         }
+        model.addAttribute("loggedIn", false);
         return "home";
+    }
+
+    @GetMapping("/dashboard")
+    public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("activeTab", "buysell");
+        return "dashboard";
+    }
+
+    @GetMapping("/dashboard/lost-found")
+    public String lostFound(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("activeTab", "lostfound");
+        return "dashboard";
+    }
+
+    @GetMapping("/dashboard/auction")
+    public String auction(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("activeTab", "auction");
+        return "dashboard";
+    }
+
+    @GetMapping("/dashboard/teams")
+    public String teams(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("activeTab", "teams");
+        return "dashboard";
+    }
+
+    @GetMapping("/dashboard/stats")
+    public String stats(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("activeTab", "stats");
+        return "dashboard";
     }
 }
