@@ -1,0 +1,10 @@
+{
+  "name": "campusconnect-tools",
+  "private": true,
+  "scripts": {
+    "test:api": "newman run postman/CampusConnect.postman_collection.json -e postman/CampusConnect.local.postman_environment.json --delay-request 300"
+  },
+  "devDependencies": {
+    "newman": "6.2.1"
+  }
+}

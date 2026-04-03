@@ -1,0 +1,11 @@
+{
+  "source": "https://www.iitb.ac.in/",
+  "fetchedAt": "2026-04-04T00:00:00+00:00",
+  "items": [
+    {
+      "title": "Run scripts/selenium_iitb/fetch_iitb_highlights.py to refresh IIT Bombay Latest News.",
+      "url": "https://www.iitb.ac.in/",
+      "date": ""
+    }
+  ]
+}

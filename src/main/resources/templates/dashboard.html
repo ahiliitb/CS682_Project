@@ -28,7 +28,25 @@
         .nav-item-icon { margin-right: 10px; }
 
         /* Main Content */
-        .main-content { flex: 1; }
+        .main-content { flex: 1; display: flex; flex-direction: column; gap: 1rem; }
+
+        /* IIT Bombay highlights (data from scripts/selenium_iitb) */
+        .highlights-card {
+            background: linear-gradient(135deg, #e8f4fc 0%, #fff 100%);
+            border: 1px solid #cfe8f7;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .highlights-card h3 { font-size: 1rem; color: #1a1a1a; margin: 0 0 0.5rem; font-weight: 600; }
+        .highlights-meta { font-size: 0.8rem; color: #666; margin: 0 0 0.75rem; }
+        .highlights-list { list-style: none; margin: 0; padding: 0; }
+        .highlights-list li { margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e8eef2; font-size: 0.9rem; }
+        .highlights-list li:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .highlights-list a { color: #1877f2; text-decoration: none; font-weight: 500; }
+        .highlights-list a:hover { text-decoration: underline; }
+        .highlights-date { display: block; font-size: 0.75rem; color: #888; margin-top: 0.2rem; }
+
         .content-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1.5rem; }
         .content-header { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
         .content-header h2 { color: #1a1a1a; font-size: 1.4rem; }
@@ -101,6 +119,21 @@
 
         <!-- Main Content Area -->
         <main class="main-content">
+            <section class="highlights-card" th:if="${iitbHighlights != null and !iitbHighlights.isEmpty()}">
+                <h3>Campus highlights</h3>
+                <p class="highlights-meta" th:if="${iitbHighlightsSource != null}">
+                    From IIT Bombay public news
+                    <span th:if="${iitbHighlightsFetchedAt != null and !iitbHighlightsFetchedAt.isEmpty()}">
+                        · last updated <span th:text="${iitbHighlightsFetchedAt}">—</span>
+                    </span>
+                </p>
+                <ul class="highlights-list">
+                    <li th:each="h : ${iitbHighlights}">
+                        <a th:href="${h.url}" th:text="${h.title}" target="_blank" rel="noopener noreferrer">Headline</a>
+                        <span class="highlights-date" th:if="${h.date != null and !h.date.isEmpty()}" th:text="${h.date}"></span>
+                    </li>
+                </ul>
+            </section>
             <div class="content-card">
                 <!-- Buy/Sell Section (Default View) -->
                 <div th:if="${activeTab == 'buysell' or activeTab == null}">

@@ -12,6 +12,7 @@ import com.SE.final_project.model.User;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.SE.final_project.repository.UserRepository;
+import com.SE.final_project.service.IitbHighlightsService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -20,10 +21,13 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IitbHighlightsService iitbHighlightsService;
 
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
+            IitbHighlightsService iitbHighlightsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.iitbHighlightsService = iitbHighlightsService;
     }
 
     @GetMapping("/login")
@@ -117,6 +121,7 @@ public class AuthController {
     public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "buysell");
+        addIitbHighlights(model);
         return "dashboard";
     }
 
@@ -124,6 +129,7 @@ public class AuthController {
     public String lostFound(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "lostfound");
+        addIitbHighlights(model);
         return "dashboard";
     }
 
@@ -131,6 +137,7 @@ public class AuthController {
     public String auction(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "auction");
+        addIitbHighlights(model);
         return "dashboard";
     }
 
@@ -138,6 +145,7 @@ public class AuthController {
     public String teams(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "teams");
+        addIitbHighlights(model);
         return "dashboard";
     }
 
@@ -145,6 +153,14 @@ public class AuthController {
     public String stats(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "stats");
+        addIitbHighlights(model);
         return "dashboard";
+    }
+
+    private void addIitbHighlights(Model model) {
+        var doc = iitbHighlightsService.loadDocument();
+        model.addAttribute("iitbHighlights", iitbHighlightsService.getItems());
+        model.addAttribute("iitbHighlightsFetchedAt", doc.fetchedAt());
+        model.addAttribute("iitbHighlightsSource", doc.source());
     }
 }

@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Node (Newman) ###
+node_modules/
+
+### Python (Selenium scraper) ###
+scripts/selenium_iitb/.venv/

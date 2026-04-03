@@ -1,0 +1,211 @@
+{
+  "info": {
+    "_postman_id": "b2c3d4e5-f6a7-4890-b123-456789abcdef",
+    "name": "CampusConnect",
+    "description": "HTTP flows for the CampusConnect Spring Boot app: home, CSRF-aware form login, authenticated dashboard, optional signup, and static IITB highlights JSON.\n\n**Setup:** Import this collection and `CampusConnect.local.postman_environment.json`. Select the environment. Create a user matching `test_username` / `test_password` (or register via the app), then run requests in order.\n\n**Spring Data REST:** `GET /users` exists but returns 302 to login when unauthenticated; use the session from Login after enabling redirects if you need HAL.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - GET home",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/",
+        "description": "Public landing page (redirects to /dashboard when already logged in)."
+      },
+      "response": []
+    },
+    {
+      "name": "02 - GET login page (saves CSRF)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const html = pm.response.text();",
+              "const m = html.match(/name=\\\"_csrf\\\"\\s+value=\\\"([^\\\"]+)\\\"/);",
+              "if (m) {",
+              "  pm.environment.set('csrf_token', m[1]);",
+              "  pm.test('CSRF token captured', function () { pm.expect(m[1].length).to.be.above(10); });",
+              "} else {",
+              "  pm.test('CSRF missing', function () { pm.expect.fail('No _csrf hidden field in login HTML'); });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/login",
+        "description": "Loads the login form; Test script stores `_csrf` in `csrf_token` for the next request."
+      },
+      "response": []
+    },
+    {
+      "name": "03 - POST login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{test_username}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{test_password}}",
+              "type": "secret"
+            },
+            {
+              "key": "_csrf",
+              "value": "{{csrf_token}}",
+              "type": "secret"
+            }
+          ]
+        },
+        "url": "{{base_url}}/login",
+        "description": "Session cookie is stored by Postman for this domain. Turn on **automatically follow redirects** (default) to land on /dashboard (302)."
+      },
+      "response": []
+    },
+    {
+      "name": "04 - GET dashboard (authenticated)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Dashboard markup', function () { pm.expect(pm.response.text()).to.include('Dashboard'); });"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/dashboard",
+        "description": "Requires session from step 03."
+      },
+      "response": []
+    },
+    {
+      "name": "05 - GET IITB highlights JSON (static)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/data/iitb-highlights.json",
+        "description": "Static file produced by `scripts/selenium_iitb/fetch_iitb_highlights.py` (no auth)."
+      },
+      "response": []
+    },
+    {
+      "name": "06 - GET register page (saves CSRF for signup)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const html = pm.response.text();",
+              "const m = html.match(/name=\\\"_csrf\\\"\\s+value=\\\"([^\\\"]+)\\\"/);",
+              "if (m) { pm.environment.set('csrf_register', m[1]); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/register",
+        "description": "Use before POST /signup when creating a new account via API."
+      },
+      "response": []
+    },
+    {
+      "name": "07 - POST signup (optional)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{test_username}}",
+              "type": "text"
+            },
+            {
+              "key": "email",
+              "value": "{{test_email}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{test_password}}",
+              "type": "secret"
+            },
+            {
+              "key": "confirmPassword",
+              "value": "{{test_password}}",
+              "type": "secret"
+            },
+            {
+              "key": "_csrf",
+              "value": "{{csrf_register}}",
+              "type": "secret"
+            }
+          ]
+        },
+        "url": "{{base_url}}/signup",
+        "description": "Only succeeds if the username/email are not already registered. Run 06 first. IIT Bombay email domain (@iitb.ac.in) is required."
+      },
+      "response": []
+    },
+    {
+      "name": "08 - GET Spring Data REST users (unauthenticated)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Redirects or forbids when not logged in', function () {",
+              "  pm.expect([302, 401, 403]).to.include(pm.response.code);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/hal+json"
+          }
+        ],
+        "url": "{{base_url}}/users",
+        "description": "Spring Data REST exposes `/users` from `UserRepository`; Spring Security redirects anonymous clients (typically 302 to login). After Login (step 03), you get 200 with HAL if authorized."
+      },
+      "response": []
+    }
+  ]
+}
