@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.SE.final_project.repository.UserRepository;
 import com.SE.final_project.service.IitbHighlightsService;
+import com.SE.final_project.service.TeamService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -22,12 +23,14 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final IitbHighlightsService iitbHighlightsService;
+    private final TeamService teamService;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            IitbHighlightsService iitbHighlightsService) {
+            IitbHighlightsService iitbHighlightsService, TeamService teamService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
+        this.teamService = teamService;
     }
 
     @GetMapping("/login")
@@ -145,6 +148,9 @@ public class AuthController {
     public String teams(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "teams");
+        model.addAttribute("allTeams", teamService.getAllTeams());
+        model.addAttribute("joinedTeamIds", teamService.getJoinedTeamIds(userDetails.getUsername()));
+        model.addAttribute("createdTeams", teamService.getTeamsCreatedBy(userDetails.getUsername()));
         addIitbHighlights(model);
         return "dashboard";
     }
