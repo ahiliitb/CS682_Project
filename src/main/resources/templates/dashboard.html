@@ -52,6 +52,33 @@
         .content-header h2 { color: #1a1a1a; font-size: 1.4rem; }
         .content-header p { color: #666; margin-top: 0.5rem; }
 
+        .flash-message { margin-bottom: 1rem; padding: 0.9rem 1rem; border-radius: 10px; font-size: 0.95rem; }
+        .flash-message.success { background: #e9f8ef; color: #166534; }
+        .flash-message.error { background: #feecec; color: #b42318; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-field { display: flex; flex-direction: column; gap: 0.4rem; }
+        .form-field label { font-size: 0.9rem; color: #333; font-weight: 600; }
+        .form-field input, .form-field select, .form-field textarea {
+            width: 100%;
+            padding: 0.8rem 0.9rem;
+            border: 1px solid #d7dce3;
+            border-radius: 10px;
+            background: #fff;
+            font: inherit;
+        }
+        .form-field textarea { min-height: 110px; resize: vertical; }
+        .form-actions { display: flex; justify-content: flex-start; margin-top: 0.5rem; }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+        .summary-tile { background: #f7f9fc; border: 1px solid #e6ebf2; border-radius: 12px; padding: 1rem; }
+        .summary-tile strong { display: block; font-size: 1.4rem; color: #1877f2; margin-bottom: 0.2rem; }
+        .summary-tile span { color: #666; font-size: 0.9rem; }
+        .rating-list { list-style: none; display: grid; gap: 0.75rem; padding: 0; margin: 0; }
+        .rating-list li { padding: 1rem; border: 1px solid #eee; border-radius: 12px; background: #fff; }
+        .rating-row { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 0.35rem; }
+        .rating-score { font-weight: 700; color: #1877f2; }
+        .rating-meta { font-size: 0.85rem; color: #777; }
+
         /* Buy/Sell Section */
         .section-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
         .section-tab { padding: 0.6rem 1.2rem; border: none; background: #f0f2f5; color: #666; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
@@ -113,6 +140,9 @@
                 </a>
                 <a href="/dashboard/stats" class="nav-item" th:classappend="${activeTab == 'stats' ? 'active' : ''}">
                     <span class="nav-item-icon">&#128200;</span>Statistics
+                </a>
+                <a href="/dashboard/ratings" class="nav-item" th:classappend="${activeTab == 'ratings' ? 'active' : ''}">
+                    <span class="nav-item-icon">&#11088;</span>Ratings
                 </a>
             </nav>
         </aside>
@@ -211,6 +241,86 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">&#128200;</div>
                         <p>Coming soon! This feature is under development.</p>
+                    </div>
+                </div>
+
+                <!-- Ratings Section -->
+                <div th:if="${activeTab == 'ratings'}">
+                    <div class="content-header">
+                        <h2>Ratings</h2>
+                        <p>Rate campus sellers and track the feedback you receive.</p>
+                    </div>
+
+                    <div th:if="${successMessage != null}" class="flash-message success" th:text="${successMessage}"></div>
+                    <div th:if="${errorMessage != null}" class="flash-message error" th:text="${errorMessage}"></div>
+
+                    <div class="summary-grid">
+                        <div class="summary-tile">
+                            <strong th:text="${#numbers.formatDecimal(averageRating, 1, 1)}">0.0</strong>
+                            <span>Average rating received</span>
+                        </div>
+                        <div class="summary-tile">
+                            <strong th:text="${ratingsCount}">0</strong>
+                            <span>Total ratings received</span>
+                        </div>
+                        <div class="summary-tile">
+                            <strong th:text="${username}">user</strong>
+                            <span>Logged-in account</span>
+                        </div>
+                    </div>
+
+                    <div class="content-card" style="padding: 0; box-shadow: none;">
+                        <form th:action="@{/dashboard/ratings}" method="post" style="margin-bottom: 1.5rem;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <div class="form-grid">
+                                <div class="form-field">
+                                    <label for="rateeUsername">Rate seller</label>
+                                    <select id="rateeUsername" name="rateeUsername" required>
+                                        <option value="" disabled selected>Select a user</option>
+                                        <option th:each="user : ${users}" th:value="${user.username}" th:text="${user.username}"></option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label for="score">Score</label>
+                                    <select id="score" name="score" required>
+                                        <option value="5">5 - Excellent</option>
+                                        <option value="4">4 - Good</option>
+                                        <option value="3">3 - Average</option>
+                                        <option value="2">2 - Fair</option>
+                                        <option value="1">1 - Poor</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="comment">Comment</label>
+                                <textarea id="comment" name="comment" placeholder="Add a short note about the transaction or interaction."></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-primary" type="submit">Submit Rating</button>
+                            </div>
+                        </form>
+
+                        <div>
+                            <div class="content-header" style="border-bottom: none; margin-bottom: 0.75rem; padding-bottom: 0;">
+                                <h2 style="font-size: 1.1rem;">Recent ratings you received</h2>
+                            </div>
+                            <ul class="rating-list" th:if="${ratingsReceived != null and !ratingsReceived.isEmpty()}">
+                                <li th:each="rating : ${ratingsReceived}">
+                                    <div class="rating-row">
+                                        <div>
+                                            <strong th:text="${rating.rater.username}">rater</strong>
+                                            <div class="rating-meta" th:text="${rating.createdAt}">timestamp</div>
+                                        </div>
+                                        <div class="rating-score" th:text="${rating.score + '/5'}">5/5</div>
+                                    </div>
+                                    <p th:text="${rating.comment != null and !rating.comment.isEmpty() ? rating.comment : 'No comment provided.'}"></p>
+                                </li>
+                            </ul>
+                            <div class="empty-state" th:if="${ratingsReceived == null or ratingsReceived.isEmpty()}" style="padding: 1.5rem 0;">
+                                <div class="empty-state-icon">&#11088;</div>
+                                <p>No ratings yet. Once someone rates you, they will appear here.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
