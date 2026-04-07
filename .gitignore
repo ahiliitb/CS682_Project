@@ -32,6 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### Local data ###
+data/
+
 ### Node (Newman) ###
 node_modules/
 
