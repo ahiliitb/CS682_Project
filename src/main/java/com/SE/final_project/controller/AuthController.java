@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.SE.final_project.repository.UserRepository;
 import com.SE.final_project.service.IitbHighlightsService;
+import com.SE.final_project.service.StatisticsService;
 import com.SE.final_project.service.TeamService;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,13 +25,16 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final IitbHighlightsService iitbHighlightsService;
     private final TeamService teamService;
+    private final StatisticsService statisticsService;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            IitbHighlightsService iitbHighlightsService, TeamService teamService) {
+            IitbHighlightsService iitbHighlightsService, TeamService teamService,
+            StatisticsService statisticsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
         this.teamService = teamService;
+        this.statisticsService = statisticsService;
     }
 
     @GetMapping("/login")
@@ -159,6 +163,15 @@ public class AuthController {
     public String stats(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "stats");
+        model.addAttribute("totalUsers", statisticsService.getTotalUsers());
+        model.addAttribute("totalItems", statisticsService.getTotalItems());
+        model.addAttribute("activeItems", statisticsService.getActiveItems());
+        model.addAttribute("boughtCount", statisticsService.getBoughtCount());
+        model.addAttribute("soldCount", statisticsService.getSoldCount());
+        model.addAttribute("lostCount", statisticsService.getLostCount());
+        model.addAttribute("auctionedCount", statisticsService.getAuctionedCount());
+        model.addAttribute("completedTransactions", statisticsService.getCompletedTransactions());
+        model.addAttribute("campusActivityCount", statisticsService.getCampusActivityCount());
         addIitbHighlights(model);
         return "dashboard";
     }
