@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.SE.final_project.model.User;
+import com.SE.final_project.service.BuySellService;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,15 +27,17 @@ public class AuthController {
     private final IitbHighlightsService iitbHighlightsService;
     private final TeamService teamService;
     private final StatisticsService statisticsService;
+    private final BuySellService buySellService;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
             IitbHighlightsService iitbHighlightsService, TeamService teamService,
-            StatisticsService statisticsService) {
+            StatisticsService statisticsService, BuySellService buySellService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
         this.teamService = teamService;
         this.statisticsService = statisticsService;
+        this.buySellService = buySellService;
     }
 
     @GetMapping("/login")
@@ -128,6 +131,8 @@ public class AuthController {
     public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "buysell");
+        model.addAttribute("activeListings", buySellService.getActiveListings());
+        model.addAttribute("myListings", buySellService.getListingsPostedBy(userDetails.getUsername()));
         addIitbHighlights(model);
         return "dashboard";
     }

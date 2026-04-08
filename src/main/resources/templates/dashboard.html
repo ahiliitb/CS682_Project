@@ -194,28 +194,55 @@
                         <p>Browse items for sale or list your own items on campus.</p>
                     </div>
 
-                    <div class="section-tabs">
-                        <button class="section-tab active">All Items</button>
-                        <button class="section-tab">My Listings</button>
-                        <button class="section-tab">Saved</button>
-                    </div>
+                    <div th:if="${successMessage != null}" class="flash-message success" th:text="${successMessage}"></div>
+                    <div th:if="${errorMessage != null}" class="flash-message error" th:text="${errorMessage}"></div>
 
-                    <div class="empty-state">
-                        <div class="empty-state-icon">&#128722;</div>
-                        <p>No items listed yet. Be the first to list an item!</p>
-                        <button class="btn-primary">+ List an Item</button>
-                    </div>
-
-                    <!-- Items will be displayed here when available -->
-                    <!--
-                    <div class="items-grid">
-                        <div class="item-card">
-                            <div class="item-placeholder">Image</div>
-                            <div class="item-title">Item Name</div>
-                            <div class="item-price">Rs. 500</div>
+                    <form th:action="@{/dashboard/buysell/list}" method="post" style="margin-bottom: 1.25rem;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="listingName">Item name</label>
+                                <input id="listingName" name="name" type="text" placeholder="Scientific calculator, cycle, lamp..." required />
+                            </div>
+                            <div class="form-field">
+                                <label for="listingPrice">Price (INR)</label>
+                                <input id="listingPrice" name="price" type="number" min="1" step="0.01" placeholder="499" required />
+                            </div>
                         </div>
+                        <div class="form-field">
+                            <label for="listingDescription">Description</label>
+                            <textarea id="listingDescription" name="description" placeholder="Condition, pickup location, contact preference."></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-primary" type="submit">+ List Item</button>
+                        </div>
+                    </form>
+
+                    <div class="team-badges" style="margin-bottom: 1rem;">
+                        <span class="team-badge" th:text="'Open listings: ' + ${activeListings != null ? activeListings.size() : 0}">Open listings: 0</span>
+                        <span class="team-badge" th:text="'My total listings: ' + ${myListings != null ? myListings.size() : 0}">My total listings: 0</span>
                     </div>
-                    -->
+
+                    <div class="items-grid" th:if="${activeListings != null and !activeListings.isEmpty()}">
+                        <article class="item-card" th:each="item : ${activeListings}">
+                            <div class="item-placeholder">Campus Listing</div>
+                            <div class="item-title" th:text="${item.name}">Item Name</div>
+                            <p class="team-muted" th:text="${item.description != null and !item.description.isBlank() ? item.description : 'No description'}"></p>
+                            <div class="item-price" th:text="'Rs. ' + ${#numbers.formatDecimal(item.price, 1, 2)}">Rs. 500.00</div>
+                            <div class="team-actions" style="margin-top: 0.75rem;">
+                                <form th:action="@{/dashboard/buysell/buy}" method="post" style="margin:0;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <input type="hidden" name="itemId" th:value="${item.id}" />
+                                    <button class="btn-secondary" type="submit">Buy Now</button>
+                                </form>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="empty-state" th:if="${activeListings == null or activeListings.isEmpty()}">
+                        <div class="empty-state-icon">&#128722;</div>
+                        <p>No active listings yet. Add your first item above.</p>
+                    </div>
                 </div>
 
                 <!-- Lost & Found Section -->
