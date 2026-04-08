@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SSO Codes Admin - CampusCart</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f4f6fa; color: #1a1a1a; }
+        .container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .link { text-decoration: none; color: #1756b3; font-weight: 600; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1rem; margin-bottom: 1rem; }
+        .message { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; }
+        .success { background: #e9f8ef; color: #166534; }
+        .error { background: #feecec; color: #b42318; }
+        .btn { padding: 0.55rem 0.9rem; border: 1px solid #cfe0fb; background: #fff; color: #1756b3; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn:hover { background: #f5f9ff; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { border-bottom: 1px solid #edf0f5; padding: 0.65rem; text-align: left; font-size: 0.9rem; }
+        .table th { color: #4a5575; font-weight: 700; }
+        .badge { display: inline-block; padding: 0.22rem 0.5rem; border-radius: 999px; background: #eef5ff; color: #1756b3; font-size: 0.78rem; font-weight: 700; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h2>Admin SSO Codes</h2>
+        <div>
+            <a class="link" href="/admin/moderation">Moderation</a>
+            &nbsp;|&nbsp;
+            <a class="link" href="/dashboard">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div th:if="${successMessage != null}" class="message success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage != null}" class="message error" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <h3>Generate One-Time Code</h3>
+        <form th:action="@{/admin/sso-codes/generate}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button class="btn" type="submit">Generate SSO Code</button>
+        </form>
+        <p style="margin-top:0.6rem; color:#5d6780; font-size:0.9rem;">Share generated code securely. It is single-use and expires automatically.</p>
+    </div>
+
+    <div class="card">
+        <h3>Active Codes</h3>
+        <table class="table" th:if="${activeCodes != null and !activeCodes.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th>Created At</th>
+                <th>Expires At</th>
+                <th>Created By</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="code : ${activeCodes}">
+                <td><span class="badge" th:text="${code.code}">IITB-XXXX</span></td>
+                <td th:text="${code.createdAt}">created</td>
+                <td th:text="${code.expiresAt}">expiry</td>
+                <td th:text="${code.createdBy != null ? code.createdBy.username : '-'}">admin</td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${activeCodes == null or activeCodes.isEmpty()}">No active SSO codes.</p>
+    </div>
+
+    <div class="card">
+        <h3>Recent Codes</h3>
+        <table class="table" th:if="${recentCodes != null and !recentCodes.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th>Status</th>
+                <th>Used By</th>
+                <th>Used At</th>
+                <th>Expires At</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="code : ${recentCodes}">
+                <td th:text="${code.code}">IITB-XXXX</td>
+                <td>
+                    <span class="badge" th:text="${code.usedAt == null ? 'UNUSED' : 'USED'}">UNUSED</span>
+                </td>
+                <td th:text="${code.usedByEmail != null and !code.usedByEmail.isBlank() ? code.usedByEmail : '-'}">email</td>
+                <td th:text="${code.usedAt != null ? code.usedAt : '-'}">usedAt</td>
+                <td th:text="${code.expiresAt}">expires</td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${recentCodes == null or recentCodes.isEmpty()}">No code history yet.</p>
+    </div>
+</div>
+</body>
+</html>

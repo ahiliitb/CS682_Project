@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.SE.final_project.model.UserRole;
 import com.SE.final_project.model.User;
+import com.SE.final_project.model.NotificationType;
 import com.SE.final_project.service.AuctionService;
 import com.SE.final_project.service.BuySellService;
 import com.SE.final_project.service.LibraryService;
@@ -32,6 +33,7 @@ import com.SE.final_project.service.IitbHighlightsService;
 import com.SE.final_project.service.LostFoundService;
 import com.SE.final_project.service.NotificationService;
 import com.SE.final_project.service.PoolingService;
+import com.SE.final_project.service.SsoCodeService;
 import com.SE.final_project.service.StatisticsService;
 import com.SE.final_project.service.TeamService;
 
@@ -52,9 +54,7 @@ public class AuthController {
     private final LibraryService libraryService;
     private final NotificationService notificationService;
     private final UserDetailsService userDetailsService;
-
-    @Value("${app.sso.shared-code:IITB-SSO-DEMO}")
-    private String sharedSsoCode;
+    private final SsoCodeService ssoCodeService;
 
     @Value("${app.security.admin-emails:}")
     private String adminEmailsConfig;
@@ -64,7 +64,8 @@ public class AuthController {
             StatisticsService statisticsService, BuySellService buySellService,
             LostFoundService lostFoundService, AuctionService auctionService,
             PoolingService poolingService, LibraryService libraryService,
-            NotificationService notificationService, UserDetailsService userDetailsService) {
+            NotificationService notificationService, UserDetailsService userDetailsService,
+            SsoCodeService ssoCodeService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
@@ -77,6 +78,7 @@ public class AuthController {
         this.libraryService = libraryService;
         this.notificationService = notificationService;
         this.userDetailsService = userDetailsService;
+        this.ssoCodeService = ssoCodeService;
     }
 
     @GetMapping("/login")
@@ -113,8 +115,10 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("error", "Only IIT Bombay email addresses can use SSO.");
             return "redirect:/sso";
         }
-        if (ssoCode == null || !ssoCode.trim().equals(sharedSsoCode)) {
-            redirectAttributes.addFlashAttribute("error", "Invalid SSO code.");
+        try {
+            ssoCodeService.consumeCode(ssoCode, email.trim());
+        } catch (IllegalArgumentException exception) {
+            redirectAttributes.addFlashAttribute("error", exception.getMessage());
             return "redirect:/sso";
         }
 
@@ -127,6 +131,12 @@ public class AuthController {
         }
         user.setRole(resolveRoleForEmail(user.getEmail()));
         userRepository.save(user);
+
+        notificationService.notifyUser(user.getUsername(),
+            "SSO login",
+            "You logged in successfully using campus SSO.",
+            NotificationType.SECURITY,
+            false);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
