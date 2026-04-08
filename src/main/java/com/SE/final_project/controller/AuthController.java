@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.SE.final_project.model.User;
+import com.SE.final_project.service.AuctionService;
 import com.SE.final_project.service.BuySellService;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,11 +31,12 @@ public class AuthController {
     private final StatisticsService statisticsService;
     private final BuySellService buySellService;
     private final LostFoundService lostFoundService;
+    private final AuctionService auctionService;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
             IitbHighlightsService iitbHighlightsService, TeamService teamService,
             StatisticsService statisticsService, BuySellService buySellService,
-            LostFoundService lostFoundService) {
+            LostFoundService lostFoundService, AuctionService auctionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
@@ -42,6 +44,7 @@ public class AuthController {
         this.statisticsService = statisticsService;
         this.buySellService = buySellService;
         this.lostFoundService = lostFoundService;
+        this.auctionService = auctionService;
     }
 
     @GetMapping("/login")
@@ -154,6 +157,7 @@ public class AuthController {
     public String auction(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "auction");
+        model.addAttribute("auctionListings", auctionService.getAllListings());
         addIitbHighlights(model);
         return "dashboard";
     }
