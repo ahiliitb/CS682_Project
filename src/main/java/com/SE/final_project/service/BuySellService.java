@@ -1,11 +1,13 @@
 package com.SE.final_project.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.SE.final_project.model.Item;
+import com.SE.final_project.model.ListingVisibility;
 import com.SE.final_project.model.RelationType;
 import com.SE.final_project.model.User;
 import com.SE.final_project.model.UserItemRelation;
@@ -28,8 +30,10 @@ public class BuySellService {
         this.relationRepository = relationRepository;
     }
 
-    public List<Item> getActiveListings() {
-        return itemRepository.findByActiveTrueOrderByCreatedAtDesc();
+    public List<Item> getActiveListings(String username) {
+        return itemRepository.findByActiveTrueOrderByCreatedAtDesc().stream()
+                .filter(item -> isVisibleTo(item, username))
+                .toList();
     }
 
     public List<Item> getListingsPostedBy(String username) {
@@ -40,8 +44,22 @@ public class BuySellService {
                 .toList();
     }
 
+    public double getSuggestedListingPrice() {
+        List<Item> activeListings = itemRepository.findByActiveTrueOrderByCreatedAtDesc();
+        if (activeListings.isEmpty()) {
+            return 499.0;
+        }
+
+        double averagePrice = activeListings.stream()
+                .map(Item::getPrice)
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(499.0);
+        return Math.max(1.0, Math.round(averagePrice));
+    }
+
     @Transactional
-    public Item createListing(String sellerUsername, String name, String description, double price) {
+    public Item createListing(String sellerUsername, String name, String description, double price, String visibilityValue) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Item name is required.");
         }
@@ -50,7 +68,8 @@ public class BuySellService {
         }
 
         User seller = requireUser(sellerUsername);
-        Item item = new Item(name.trim(), safeText(description), price, List.of());
+        ListingVisibility visibility = parseVisibility(visibilityValue);
+        Item item = new Item(name.trim(), safeText(description), price, List.of(), seller.getUsername(), visibility);
         Item savedItem = itemRepository.save(item);
         relationRepository.save(new UserItemRelation(seller, savedItem, RelationType.SOLD));
         return savedItem;
@@ -61,6 +80,12 @@ public class BuySellService {
         User buyer = requireUser(buyerUsername);
         Item item = itemRepository.findByIdAndActiveTrue(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Item is not available."));
+
+        if (item.getVisibility() == ListingVisibility.PRIVATE
+                && item.getOwnerUsername() != null
+                && !item.getOwnerUsername().equalsIgnoreCase(buyer.getUsername())) {
+            throw new IllegalArgumentException("This listing is private.");
+        }
 
         List<UserItemRelation> sellerRelations = relationRepository.findByItemAndRelationType(item, RelationType.SOLD);
         if (sellerRelations.isEmpty()) {
@@ -79,6 +104,26 @@ public class BuySellService {
         item.setActive(false);
         itemRepository.save(item);
         relationRepository.save(new UserItemRelation(buyer, item, RelationType.BOUGHT));
+    }
+
+    private boolean isVisibleTo(Item item, String username) {
+        if (item.getVisibility() == null || item.getVisibility() == ListingVisibility.PUBLIC) {
+            return true;
+        }
+        return username != null && item.getOwnerUsername() != null
+                && item.getOwnerUsername().equalsIgnoreCase(username);
+    }
+
+    private ListingVisibility parseVisibility(String visibilityValue) {
+        if (visibilityValue == null || visibilityValue.isBlank()) {
+            return ListingVisibility.PUBLIC;
+        }
+
+        try {
+            return ListingVisibility.valueOf(visibilityValue.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Unknown listing visibility: " + visibilityValue);
+        }
     }
 
     private User requireUser(String username) {

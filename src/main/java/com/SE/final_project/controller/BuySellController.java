@@ -20,10 +20,11 @@ public class BuySellController {
     public String createListing(@RequestParam String name,
                                 @RequestParam(required = false) String description,
                                 @RequestParam double price,
+                                @RequestParam(required = false) String visibility,
                                 java.security.Principal principal,
                                 RedirectAttributes redirectAttributes) {
         try {
-            buySellService.createListing(principal.getName(), name, description, price);
+            buySellService.createListing(principal.getName(), name, description, price, visibility);
             redirectAttributes.addFlashAttribute("successMessage", "Item listed successfully.");
         } catch (IllegalArgumentException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());

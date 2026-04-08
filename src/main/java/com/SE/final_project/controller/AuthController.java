@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.SE.final_project.repository.UserRepository;
 import com.SE.final_project.service.IitbHighlightsService;
 import com.SE.final_project.service.LostFoundService;
+import com.SE.final_project.service.PoolingService;
 import com.SE.final_project.service.StatisticsService;
 import com.SE.final_project.service.TeamService;
 
@@ -32,11 +33,13 @@ public class AuthController {
     private final BuySellService buySellService;
     private final LostFoundService lostFoundService;
     private final AuctionService auctionService;
+    private final PoolingService poolingService;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
             IitbHighlightsService iitbHighlightsService, TeamService teamService,
             StatisticsService statisticsService, BuySellService buySellService,
-            LostFoundService lostFoundService, AuctionService auctionService) {
+            LostFoundService lostFoundService, AuctionService auctionService,
+            PoolingService poolingService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
@@ -45,6 +48,7 @@ public class AuthController {
         this.buySellService = buySellService;
         this.lostFoundService = lostFoundService;
         this.auctionService = auctionService;
+        this.poolingService = poolingService;
     }
 
     @GetMapping("/login")
@@ -138,8 +142,9 @@ public class AuthController {
     public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "buysell");
-        model.addAttribute("activeListings", buySellService.getActiveListings());
+        model.addAttribute("activeListings", buySellService.getActiveListings(userDetails.getUsername()));
         model.addAttribute("myListings", buySellService.getListingsPostedBy(userDetails.getUsername()));
+        model.addAttribute("suggestedListingPrice", buySellService.getSuggestedListingPrice());
         addIitbHighlights(model);
         return "dashboard";
     }
@@ -186,6 +191,17 @@ public class AuthController {
         model.addAttribute("auctionedCount", statisticsService.getAuctionedCount());
         model.addAttribute("completedTransactions", statisticsService.getCompletedTransactions());
         model.addAttribute("campusActivityCount", statisticsService.getCampusActivityCount());
+        addIitbHighlights(model);
+        return "dashboard";
+    }
+
+    @GetMapping("/dashboard/pooling")
+    public String pooling(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        model.addAttribute("username", userDetails.getUsername());
+        model.addAttribute("activeTab", "pooling");
+        model.addAttribute("poolingRequests", poolingService.getAllRequests());
+        model.addAttribute("createdPoolingRequests", poolingService.getRequestsCreatedBy(userDetails.getUsername()));
+        model.addAttribute("joinedPoolingRequestIds", poolingService.getJoinedRequestIds(userDetails.getUsername()));
         addIitbHighlights(model);
         return "dashboard";
     }

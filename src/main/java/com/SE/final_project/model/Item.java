@@ -21,6 +21,11 @@ public class Item {
 
     private boolean active;
 
+    private String ownerUsername;
+
+    @Enumerated(EnumType.STRING)
+    private ListingVisibility visibility;
+
     private LocalDateTime createdAt;
 
     // Store multiple photo URLs (separate table to avoid conflict with ItemPhoto entity)
@@ -35,10 +40,16 @@ public class Item {
     public Item() {}
 
     public Item(String name, String description, double price, List<String> photos) {
+        this(name, description, price, photos, null, ListingVisibility.PUBLIC);
+    }
+
+    public Item(String name, String description, double price, List<String> photos, String ownerUsername, ListingVisibility visibility) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.photos = photos;
+        this.ownerUsername = ownerUsername;
+        this.visibility = visibility == null ? ListingVisibility.PUBLIC : visibility;
         this.active = true;
         this.createdAt = LocalDateTime.now();
     }
@@ -77,6 +88,22 @@ public class Item {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
+    }
+
+    public ListingVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(ListingVisibility visibility) {
+        this.visibility = visibility;
     }
 
     public LocalDateTime getCreatedAt() {
