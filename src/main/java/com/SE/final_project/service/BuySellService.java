@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.SE.final_project.model.Item;
 import com.SE.final_project.model.ListingVisibility;
+import com.SE.final_project.model.NotificationType;
 import com.SE.final_project.model.RelationType;
 import com.SE.final_project.model.User;
 import com.SE.final_project.model.UserItemRelation;
@@ -21,13 +22,16 @@ public class BuySellService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final UserItemRelationRepository relationRepository;
+    private final NotificationService notificationService;
 
     public BuySellService(ItemRepository itemRepository,
                           UserRepository userRepository,
-                          UserItemRelationRepository relationRepository) {
+                          UserItemRelationRepository relationRepository,
+                          NotificationService notificationService) {
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
         this.relationRepository = relationRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Item> getActiveListings(String username) {
@@ -104,6 +108,18 @@ public class BuySellService {
         item.setActive(false);
         itemRepository.save(item);
         relationRepository.save(new UserItemRelation(buyer, item, RelationType.BOUGHT));
+
+        notificationService.notifyUser(seller.getUsername(),
+            "Listing sold",
+            "Your item \"" + item.getName() + "\" was bought by " + buyer.getUsername() + ".",
+            NotificationType.TRANSACTION,
+            true);
+
+        notificationService.notifyUser(buyer.getUsername(),
+            "Purchase confirmed",
+            "You bought \"" + item.getName() + "\" successfully.",
+            NotificationType.TRANSACTION,
+            true);
     }
 
     private boolean isVisibleTo(Item item, String username) {

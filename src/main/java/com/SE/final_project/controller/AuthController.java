@@ -1,5 +1,12 @@
 package com.SE.final_project.controller;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,15 +14,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.SE.final_project.model.UserRole;
 import com.SE.final_project.model.User;
 import com.SE.final_project.service.AuctionService;
 import com.SE.final_project.service.BuySellService;
+import com.SE.final_project.service.LibraryService;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import com.SE.final_project.repository.UserRepository;
 import com.SE.final_project.service.IitbHighlightsService;
 import com.SE.final_project.service.LostFoundService;
+import com.SE.final_project.service.NotificationService;
 import com.SE.final_project.service.PoolingService;
 import com.SE.final_project.service.StatisticsService;
 import com.SE.final_project.service.TeamService;
@@ -34,12 +49,22 @@ public class AuthController {
     private final LostFoundService lostFoundService;
     private final AuctionService auctionService;
     private final PoolingService poolingService;
+    private final LibraryService libraryService;
+    private final NotificationService notificationService;
+    private final UserDetailsService userDetailsService;
+
+    @Value("${app.sso.shared-code:IITB-SSO-DEMO}")
+    private String sharedSsoCode;
+
+    @Value("${app.security.admin-emails:}")
+    private String adminEmailsConfig;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
             IitbHighlightsService iitbHighlightsService, TeamService teamService,
             StatisticsService statisticsService, BuySellService buySellService,
             LostFoundService lostFoundService, AuctionService auctionService,
-            PoolingService poolingService) {
+            PoolingService poolingService, LibraryService libraryService,
+            NotificationService notificationService, UserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
@@ -49,6 +74,9 @@ public class AuthController {
         this.lostFoundService = lostFoundService;
         this.auctionService = auctionService;
         this.poolingService = poolingService;
+        this.libraryService = libraryService;
+        this.notificationService = notificationService;
+        this.userDetailsService = userDetailsService;
     }
 
     @GetMapping("/login")
@@ -66,6 +94,51 @@ public class AuthController {
             model.addAttribute("error", "Invalid username or password.");
         }
         return "login";
+    }
+
+    @GetMapping("/sso")
+    public String ssoPage(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails != null) {
+            return "redirect:/dashboard";
+        }
+        return "sso";
+    }
+
+    @PostMapping("/sso-login")
+    public String ssoLogin(@RequestParam String email,
+                           @RequestParam String ssoCode,
+                           HttpServletRequest request,
+                           RedirectAttributes redirectAttributes) {
+        if (email == null || email.isBlank() || !email.toLowerCase().endsWith("@iitb.ac.in")) {
+            redirectAttributes.addFlashAttribute("error", "Only IIT Bombay email addresses can use SSO.");
+            return "redirect:/sso";
+        }
+        if (ssoCode == null || !ssoCode.trim().equals(sharedSsoCode)) {
+            redirectAttributes.addFlashAttribute("error", "Invalid SSO code.");
+            return "redirect:/sso";
+        }
+
+        User user = userRepository.findByEmail(email.trim());
+        if (user == null) {
+            user = new User();
+            user.setEmail(email.trim());
+            user.setUsername(uniqueUsernameFromEmail(email.trim()));
+            user.setPassword(passwordEncoder.encode("sso-login-placeholder"));
+        }
+        user.setRole(resolveRoleForEmail(user.getEmail()));
+        userRepository.save(user);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+        request.getSession(true)
+                .setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+
+        redirectAttributes.addFlashAttribute("successMessage", "SSO login successful.");
+        return "redirect:/dashboard";
     }
 
     @GetMapping("/register")
@@ -123,6 +196,7 @@ public class AuthController {
         user.setUsername(username.trim());
         user.setEmail(email.trim());
         user.setPassword(passwordEncoder.encode(password));
+        user.setRole(resolveRoleForEmail(email));
         userRepository.save(user);
 
         redirectAttributes.addFlashAttribute("message", "Account created. Please log in.");
@@ -140,7 +214,7 @@ public class AuthController {
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("username", userDetails.getUsername());
+        addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "buysell");
         model.addAttribute("activeListings", buySellService.getActiveListings(userDetails.getUsername()));
         model.addAttribute("myListings", buySellService.getListingsPostedBy(userDetails.getUsername()));
@@ -151,7 +225,7 @@ public class AuthController {
 
     @GetMapping("/dashboard/lost-found")
     public String lostFound(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("username", userDetails.getUsername());
+        addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "lostfound");
         model.addAttribute("lostFoundPosts", lostFoundService.getAllPosts());
         addIitbHighlights(model);
@@ -160,7 +234,7 @@ public class AuthController {
 
     @GetMapping("/dashboard/auction")
     public String auction(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("username", userDetails.getUsername());
+        addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "auction");
         model.addAttribute("auctionListings", auctionService.getAllListings());
         addIitbHighlights(model);
@@ -169,7 +243,7 @@ public class AuthController {
 
     @GetMapping("/dashboard/teams")
     public String teams(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("username", userDetails.getUsername());
+        addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "teams");
         model.addAttribute("allTeams", teamService.getAllTeams());
         model.addAttribute("joinedTeamIds", teamService.getJoinedTeamIds(userDetails.getUsername()));
@@ -180,7 +254,7 @@ public class AuthController {
 
     @GetMapping("/dashboard/stats")
     public String stats(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("username", userDetails.getUsername());
+        addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "stats");
         model.addAttribute("totalUsers", statisticsService.getTotalUsers());
         model.addAttribute("totalItems", statisticsService.getTotalItems());
@@ -197,7 +271,7 @@ public class AuthController {
 
     @GetMapping("/dashboard/pooling")
     public String pooling(@AuthenticationPrincipal UserDetails userDetails, Model model) {
-        model.addAttribute("username", userDetails.getUsername());
+        addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "pooling");
         model.addAttribute("poolingRequests", poolingService.getAllRequests());
         model.addAttribute("createdPoolingRequests", poolingService.getRequestsCreatedBy(userDetails.getUsername()));
@@ -206,10 +280,58 @@ public class AuthController {
         return "dashboard";
     }
 
+    @GetMapping("/dashboard/library")
+    public String library(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        addCommonDashboardData(model, userDetails.getUsername());
+        model.addAttribute("activeTab", "library");
+        model.addAttribute("availableBooks", libraryService.getAvailableBooks());
+        model.addAttribute("myLibraryBooks", libraryService.getBooksOwnedBy(userDetails.getUsername()));
+        model.addAttribute("myBorrowedBooks", libraryService.getBooksBorrowedBy(userDetails.getUsername()));
+        addIitbHighlights(model);
+        return "dashboard";
+    }
+
+    private void addCommonDashboardData(Model model, String username) {
+        model.addAttribute("username", username);
+        model.addAttribute("notifications", notificationService.getRecentForUser(username));
+        model.addAttribute("unreadNotifications", notificationService.getUnreadCount(username));
+        model.addAttribute("isAdmin", isAdminUser(username));
+    }
+
     private void addIitbHighlights(Model model) {
         var doc = iitbHighlightsService.loadDocument();
         model.addAttribute("iitbHighlights", iitbHighlightsService.getItems());
         model.addAttribute("iitbHighlightsFetchedAt", doc.fetchedAt());
         model.addAttribute("iitbHighlightsSource", doc.source());
+    }
+
+    private UserRole resolveRoleForEmail(String email) {
+        if (email == null) {
+            return UserRole.STUDENT;
+        }
+
+        Set<String> adminEmails = Arrays.stream(adminEmailsConfig.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        return adminEmails.contains(email.toLowerCase()) ? UserRole.ADMIN : UserRole.STUDENT;
+    }
+
+    private boolean isAdminUser(String username) {
+        User user = userRepository.findByUsername(username);
+        return user != null && user.getRole() == UserRole.ADMIN;
+    }
+
+    private String uniqueUsernameFromEmail(String email) {
+        String base = email.substring(0, email.indexOf('@')).replaceAll("[^a-zA-Z0-9._-]", "");
+        String candidate = base.isBlank() ? "iitbuser" : base;
+        int suffix = 1;
+        while (userRepository.existsByUsername(candidate)) {
+            candidate = base + suffix;
+            suffix++;
+        }
+        return candidate;
     }
 }

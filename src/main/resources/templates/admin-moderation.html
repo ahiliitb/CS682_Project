@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Moderation Admin - CampusCart</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f4f6fa; color: #1a1a1a; }
+        .container { max-width: 1180px; margin: 1.5rem auto; padding: 0 1rem; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .link { text-decoration: none; color: #1756b3; font-weight: 600; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); padding: 1rem; margin-bottom: 1rem; }
+        .message { padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; }
+        .success { background: #e9f8ef; color: #166534; }
+        .error { background: #feecec; color: #b42318; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { border-bottom: 1px solid #edf0f5; padding: 0.7rem; text-align: left; font-size: 0.9rem; vertical-align: top; }
+        .table th { color: #4a5575; font-weight: 700; }
+        .badge { display: inline-block; padding: 0.22rem 0.5rem; border-radius: 999px; background: #eef5ff; color: #1756b3; font-size: 0.78rem; font-weight: 700; }
+        .actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .actions input { padding: 0.45rem; border: 1px solid #d7dce3; border-radius: 8px; min-width: 180px; }
+        .actions button { padding: 0.45rem 0.75rem; border: 1px solid #cfe0fb; background: #fff; color: #1756b3; border-radius: 8px; cursor: pointer; }
+        .actions button:hover { background: #f5f9ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h2>Moderation Dashboard</h2>
+        <a class="link" href="/dashboard">Back to Dashboard</a>
+    </div>
+
+    <div th:if="${successMessage != null}" class="message success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage != null}" class="message error" th:text="${errorMessage}"></div>
+
+    <div class="card">
+        <h3>Open Reports</h3>
+        <table class="table" th:if="${openReports != null and !openReports.isEmpty()}">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Target</th>
+                <th>Reason</th>
+                <th>Reporter</th>
+                <th>Created</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="report : ${openReports}">
+                <td th:text="${report.id}">1</td>
+                <td>
+                    <span class="badge" th:text="${report.targetType}">TYPE</span>
+                    <div th:text="'ID: ' + ${report.targetId}">ID</div>
+                </td>
+                <td th:text="${report.reason}">Reason</td>
+                <td th:text="${report.reporter != null ? report.reporter.username : 'Unknown'}">reporter</td>
+                <td th:text="${report.createdAt}">time</td>
+                <td>
+                    <div class="actions">
+                        <form th:action="@{'/admin/moderation/' + ${report.id} + '/resolve'}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="text" name="note" placeholder="Admin note">
+                            <button type="submit">Resolve</button>
+                        </form>
+                        <form th:action="@{'/admin/moderation/' + ${report.id} + '/reject'}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="text" name="note" placeholder="Admin note">
+                            <button type="submit">Reject</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${openReports == null or openReports.isEmpty()}">No open moderation reports.</p>
+    </div>
+
+    <div class="card">
+        <h3>Recent Reports</h3>
+        <table class="table" th:if="${recentReports != null and !recentReports.isEmpty()}">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Target</th>
+                <th>Status</th>
+                <th>Reporter</th>
+                <th>Reviewed By</th>
+                <th>Note</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="report : ${recentReports}">
+                <td th:text="${report.id}">1</td>
+                <td th:text="${report.targetType + ' #' + report.targetId}">target</td>
+                <td><span class="badge" th:text="${report.status}">OPEN</span></td>
+                <td th:text="${report.reporter != null ? report.reporter.username : 'Unknown'}">reporter</td>
+                <td th:text="${report.reviewedBy != null ? report.reviewedBy.username : '-'}">reviewer</td>
+                <td th:text="${report.adminNote != null and !report.adminNote.isBlank() ? report.adminNote : '-'}">-</td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${recentReports == null or recentReports.isEmpty()}">No reports available.</p>
+    </div>
+</div>
+</body>
+</html>

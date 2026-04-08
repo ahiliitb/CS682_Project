@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.SE.final_project.model.AuctionBid;
 import com.SE.final_project.model.AuctionListing;
 import com.SE.final_project.model.Item;
+import com.SE.final_project.model.NotificationType;
 import com.SE.final_project.model.RelationType;
 import com.SE.final_project.model.User;
 import com.SE.final_project.model.UserItemRelation;
@@ -26,17 +27,20 @@ public class AuctionService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final UserItemRelationRepository relationRepository;
+    private final NotificationService notificationService;
 
     public AuctionService(AuctionListingRepository listingRepository,
                           AuctionBidRepository bidRepository,
                           UserRepository userRepository,
                           ItemRepository itemRepository,
-                          UserItemRelationRepository relationRepository) {
+                          UserItemRelationRepository relationRepository,
+                          NotificationService notificationService) {
         this.listingRepository = listingRepository;
         this.bidRepository = bidRepository;
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
         this.relationRepository = relationRepository;
+        this.notificationService = notificationService;
     }
 
     public List<AuctionListing> getAllListings() {
@@ -83,6 +87,12 @@ public class AuctionService {
         Item savedItem = itemRepository.save(trackingItem);
         relationRepository.save(new UserItemRelation(seller, savedItem, RelationType.AUCTIONED));
 
+        notificationService.notifyUser(seller.getUsername(),
+            "Auction listed",
+            "Your auction for \"" + itemName.trim() + "\" is now live.",
+            NotificationType.AUCTION,
+            false);
+
         return savedListing;
     }
 
@@ -103,9 +113,24 @@ public class AuctionService {
             throw new IllegalArgumentException("Bid must be greater than current bid.");
         }
 
+        User previousHighestBidder = listing.getHighestBidder();
         listing.placeBid(bidder, amount);
         listingRepository.save(listing);
         bidRepository.save(new AuctionBid(listing, bidder, amount));
+
+        notificationService.notifyUser(listing.getSeller().getUsername(),
+            "New bid received",
+            bidder.getUsername() + " bid Rs. " + amount + " on \"" + listing.getItemName() + "\".",
+            NotificationType.AUCTION,
+            true);
+
+        if (previousHighestBidder != null && !previousHighestBidder.getUsername().equalsIgnoreCase(bidder.getUsername())) {
+            notificationService.notifyUser(previousHighestBidder.getUsername(),
+                "You were outbid",
+                "Another bidder placed a higher amount on \"" + listing.getItemName() + "\".",
+                NotificationType.AUCTION,
+                true);
+        }
     }
 
     private User requireUser(String username) {

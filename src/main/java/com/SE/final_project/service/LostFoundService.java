@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.SE.final_project.model.Item;
 import com.SE.final_project.model.LostFoundPost;
 import com.SE.final_project.model.LostFoundType;
+import com.SE.final_project.model.NotificationType;
 import com.SE.final_project.model.RelationType;
 import com.SE.final_project.model.User;
 import com.SE.final_project.model.UserItemRelation;
@@ -23,15 +24,18 @@ public class LostFoundService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final UserItemRelationRepository relationRepository;
+    private final NotificationService notificationService;
 
     public LostFoundService(LostFoundPostRepository postRepository,
                             UserRepository userRepository,
                             ItemRepository itemRepository,
-                            UserItemRelationRepository relationRepository) {
+                            UserItemRelationRepository relationRepository,
+                            NotificationService notificationService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
         this.relationRepository = relationRepository;
+        this.notificationService = notificationService;
     }
 
     public List<LostFoundPost> getAllPosts() {
@@ -79,6 +83,12 @@ public class LostFoundService {
 
         post.markResolved(resolver);
         postRepository.save(post);
+
+        notificationService.notifyUser(post.getOwner().getUsername(),
+            "Lost/Found update",
+            "Your post \"" + post.getTitle() + "\" was marked resolved by " + resolver.getUsername() + ".",
+            NotificationType.INFO,
+            true);
     }
 
     private User requireUser(String username) {

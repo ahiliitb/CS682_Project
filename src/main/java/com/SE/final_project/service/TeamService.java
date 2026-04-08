@@ -7,6 +7,7 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.SE.final_project.model.NotificationType;
 import com.SE.final_project.model.Team;
 import com.SE.final_project.model.User;
 import com.SE.final_project.repository.TeamRepository;
@@ -17,10 +18,12 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, NotificationService notificationService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public List<Team> getAllTeams() {
@@ -72,7 +75,17 @@ public class TeamService {
         }
 
         team.addMember(user);
-        return teamRepository.save(team);
+        Team updated = teamRepository.save(team);
+
+        if (team.getCreator() != null && !team.getCreator().getUsername().equalsIgnoreCase(user.getUsername())) {
+            notificationService.notifyUser(team.getCreator().getUsername(),
+                    "Team joined",
+                    user.getUsername() + " joined your team \"" + team.getName() + "\".",
+                    NotificationType.TEAM,
+                    true);
+        }
+
+        return updated;
     }
 
     private User requireUser(String username) {

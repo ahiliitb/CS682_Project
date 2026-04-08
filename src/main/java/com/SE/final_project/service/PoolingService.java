@@ -7,6 +7,7 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.SE.final_project.model.NotificationType;
 import com.SE.final_project.model.PoolingRequest;
 import com.SE.final_project.model.User;
 import com.SE.final_project.repository.PoolingRequestRepository;
@@ -17,10 +18,13 @@ public class PoolingService {
 
     private final PoolingRequestRepository poolingRequestRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
-    public PoolingService(PoolingRequestRepository poolingRequestRepository, UserRepository userRepository) {
+    public PoolingService(PoolingRequestRepository poolingRequestRepository, UserRepository userRepository,
+                          NotificationService notificationService) {
         this.poolingRequestRepository = poolingRequestRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     public List<PoolingRequest> getAllRequests() {
@@ -81,7 +85,17 @@ public class PoolingService {
         }
 
         request.addParticipant(user);
-        return poolingRequestRepository.save(request);
+        PoolingRequest updated = poolingRequestRepository.save(request);
+
+        if (request.getCreator() != null && !request.getCreator().getUsername().equalsIgnoreCase(user.getUsername())) {
+            notificationService.notifyUser(request.getCreator().getUsername(),
+                    "Pooling request joined",
+                    user.getUsername() + " joined your pooling request \"" + request.getTitle() + "\".",
+                    NotificationType.POOLING,
+                    true);
+        }
+
+        return updated;
     }
 
     private User requireUser(String username) {
