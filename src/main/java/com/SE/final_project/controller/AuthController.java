@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import com.SE.final_project.repository.UserRepository;
 import com.SE.final_project.service.IitbHighlightsService;
+import com.SE.final_project.service.LostFoundService;
 import com.SE.final_project.service.StatisticsService;
 import com.SE.final_project.service.TeamService;
 
@@ -28,16 +29,19 @@ public class AuthController {
     private final TeamService teamService;
     private final StatisticsService statisticsService;
     private final BuySellService buySellService;
+    private final LostFoundService lostFoundService;
 
     public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
             IitbHighlightsService iitbHighlightsService, TeamService teamService,
-            StatisticsService statisticsService, BuySellService buySellService) {
+            StatisticsService statisticsService, BuySellService buySellService,
+            LostFoundService lostFoundService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
         this.teamService = teamService;
         this.statisticsService = statisticsService;
         this.buySellService = buySellService;
+        this.lostFoundService = lostFoundService;
     }
 
     @GetMapping("/login")
@@ -141,6 +145,7 @@ public class AuthController {
     public String lostFound(@AuthenticationPrincipal UserDetails userDetails, Model model) {
         model.addAttribute("username", userDetails.getUsername());
         model.addAttribute("activeTab", "lostfound");
+        model.addAttribute("lostFoundPosts", lostFoundService.getAllPosts());
         addIitbHighlights(model);
         return "dashboard";
     }
