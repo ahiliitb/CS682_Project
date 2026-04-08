@@ -76,14 +76,12 @@ public class LibraryService {
         notificationService.notifyUser(book.getOwner().getUsername(),
                 "Book borrowed",
                 borrower.getUsername() + " borrowed your book: " + book.getTitle(),
-                NotificationType.LIBRARY,
-                true);
+                NotificationType.LIBRARY);
 
         notificationService.notifyUser(borrower.getUsername(),
                 "Borrow confirmed",
                 "You borrowed " + book.getTitle() + ". Return by " + book.getDueDate() + ".",
-                NotificationType.LIBRARY,
-                true);
+                NotificationType.LIBRARY);
     }
 
     @Transactional
@@ -102,8 +100,7 @@ public class LibraryService {
         notificationService.notifyUser(book.getOwner().getUsername(),
                 "Return requested",
                 borrower.getUsername() + " requested return confirmation for " + book.getTitle(),
-                NotificationType.LIBRARY,
-                true);
+                NotificationType.LIBRARY);
     }
 
     @Transactional
@@ -124,8 +121,7 @@ public class LibraryService {
             notificationService.notifyUser(borrowerName,
                     "Return completed",
                     "The owner has marked your borrowed book as returned: " + book.getTitle(),
-                    NotificationType.LIBRARY,
-                    true);
+                    NotificationType.LIBRARY);
         }
     }
 

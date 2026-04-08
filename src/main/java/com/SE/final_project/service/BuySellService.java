@@ -112,14 +112,12 @@ public class BuySellService {
         notificationService.notifyUser(seller.getUsername(),
             "Listing sold",
             "Your item \"" + item.getName() + "\" was bought by " + buyer.getUsername() + ".",
-            NotificationType.TRANSACTION,
-            true);
+            NotificationType.TRANSACTION);
 
         notificationService.notifyUser(buyer.getUsername(),
             "Purchase confirmed",
             "You bought \"" + item.getName() + "\" successfully.",
-            NotificationType.TRANSACTION,
-            true);
+            NotificationType.TRANSACTION);
     }
 
     private boolean isVisibleTo(Item item, String username) {

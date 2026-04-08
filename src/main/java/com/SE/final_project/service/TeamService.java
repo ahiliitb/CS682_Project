@@ -81,8 +81,7 @@ public class TeamService {
             notificationService.notifyUser(team.getCreator().getUsername(),
                     "Team joined",
                     user.getUsername() + " joined your team \"" + team.getName() + "\".",
-                    NotificationType.TEAM,
-                    true);
+                    NotificationType.TEAM);
         }
 
         return updated;

@@ -76,8 +76,7 @@ public class SsoCodeService {
             notificationService.notifyUser(user.getUsername(),
                     "Secure login completed",
                     "Your account was accessed through campus SSO.",
-                    NotificationType.SECURITY,
-                    true);
+                    NotificationType.SECURITY);
         }
     }
 

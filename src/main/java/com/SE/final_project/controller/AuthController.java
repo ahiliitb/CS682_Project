@@ -135,8 +135,7 @@ public class AuthController {
         notificationService.notifyUser(user.getUsername(),
             "SSO login",
             "You logged in successfully using campus SSO.",
-            NotificationType.SECURITY,
-            false);
+            NotificationType.SECURITY);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(

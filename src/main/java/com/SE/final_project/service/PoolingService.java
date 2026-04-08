@@ -91,8 +91,7 @@ public class PoolingService {
             notificationService.notifyUser(request.getCreator().getUsername(),
                     "Pooling request joined",
                     user.getUsername() + " joined your pooling request \"" + request.getTitle() + "\".",
-                    NotificationType.POOLING,
-                    true);
+                    NotificationType.POOLING);
         }
 
         return updated;

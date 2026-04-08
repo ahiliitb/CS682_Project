@@ -87,8 +87,7 @@ public class LostFoundService {
         notificationService.notifyUser(post.getOwner().getUsername(),
             "Lost/Found update",
             "Your post \"" + post.getTitle() + "\" was marked resolved by " + resolver.getUsername() + ".",
-            NotificationType.INFO,
-            true);
+            NotificationType.INFO);
     }
 
     private User requireUser(String username) {

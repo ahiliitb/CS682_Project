@@ -54,8 +54,7 @@ public class ModerationService {
         notificationService.notifyUser(reporter.getUsername(),
                 "Report submitted",
                 "Your report #" + saved.getId() + " has been submitted for moderator review.",
-                NotificationType.MODERATION,
-                true);
+                NotificationType.MODERATION);
 
         return saved;
     }
@@ -70,8 +69,7 @@ public class ModerationService {
         notificationService.notifyUser(report.getReporter().getUsername(),
                 "Report resolved",
                 "Your moderation report #" + report.getId() + " was resolved by admin.",
-                NotificationType.MODERATION,
-                true);
+                NotificationType.MODERATION);
     }
 
     @Transactional
@@ -84,8 +82,7 @@ public class ModerationService {
         notificationService.notifyUser(report.getReporter().getUsername(),
                 "Report reviewed",
                 "Your moderation report #" + report.getId() + " was reviewed by admin.",
-                NotificationType.MODERATION,
-                true);
+                NotificationType.MODERATION);
     }
 
     private User requireUser(String username) {

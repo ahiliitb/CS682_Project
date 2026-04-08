@@ -2,9 +2,6 @@ package com.SE.final_project.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,14 +16,11 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-    private final JavaMailSender mailSender;
 
     public NotificationService(NotificationRepository notificationRepository,
-                               UserRepository userRepository,
-                               ObjectProvider<JavaMailSender> mailSenderProvider) {
+                               UserRepository userRepository) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
-        this.mailSender = mailSenderProvider.getIfAvailable();
     }
 
     public List<AppNotification> getRecentForUser(String username) {
@@ -52,22 +46,10 @@ public class NotificationService {
     }
 
     @Transactional
-    public void notifyUser(String username, String title, String message, NotificationType type, boolean emailAlso) {
+    public void notifyUser(String username, String title, String message, NotificationType type) {
         User user = requireUser(username);
         AppNotification notification = new AppNotification(user, safe(title), safe(message), type);
         notificationRepository.save(notification);
-
-        if (emailAlso && mailSender != null && user.getEmail() != null && !user.getEmail().isBlank()) {
-            try {
-                SimpleMailMessage mail = new SimpleMailMessage();
-                mail.setTo(user.getEmail().trim());
-                mail.setSubject("CampusCart: " + safe(title));
-                mail.setText(safe(message));
-                mailSender.send(mail);
-            } catch (Exception ignored) {
-                // Keep in-app notifications working even when SMTP is not configured.
-            }
-        }
     }
 
     private User requireUser(String username) {

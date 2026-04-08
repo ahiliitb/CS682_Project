@@ -90,8 +90,7 @@ public class AuctionService {
         notificationService.notifyUser(seller.getUsername(),
             "Auction listed",
             "Your auction for \"" + itemName.trim() + "\" is now live.",
-            NotificationType.AUCTION,
-            false);
+            NotificationType.AUCTION);
 
         return savedListing;
     }
@@ -121,15 +120,13 @@ public class AuctionService {
         notificationService.notifyUser(listing.getSeller().getUsername(),
             "New bid received",
             bidder.getUsername() + " bid Rs. " + amount + " on \"" + listing.getItemName() + "\".",
-            NotificationType.AUCTION,
-            true);
+            NotificationType.AUCTION);
 
         if (previousHighestBidder != null && !previousHighestBidder.getUsername().equalsIgnoreCase(bidder.getUsername())) {
             notificationService.notifyUser(previousHighestBidder.getUsername(),
                 "You were outbid",
                 "Another bidder placed a higher amount on \"" + listing.getItemName() + "\".",
-                NotificationType.AUCTION,
-                true);
+                NotificationType.AUCTION);
         }
     }
 
