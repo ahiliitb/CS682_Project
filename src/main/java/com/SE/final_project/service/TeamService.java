@@ -16,6 +16,8 @@ import com.SE.final_project.repository.UserRepository;
 @Service
 public class TeamService {
 
+    private static final int MAX_TEAM_SIZE = 50;
+    
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
@@ -72,6 +74,11 @@ public class TeamService {
                 .anyMatch(member -> member.getUsername().equalsIgnoreCase(user.getUsername()));
         if (isMember) {
             throw new IllegalArgumentException("You are already in this team.");
+        }
+        
+        // Check team size restriction
+        if (team.getMembers().size() >= MAX_TEAM_SIZE) {
+            throw new IllegalArgumentException("Team has reached maximum size of " + MAX_TEAM_SIZE + " members.");
         }
 
         team.addMember(user);

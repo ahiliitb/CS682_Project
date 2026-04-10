@@ -1,0 +1,434 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{float}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    pdftitle={CS 682 Final Report - CampusCart},
+    pdfauthor={Team Prismym}
+}
+
+\onehalfspacing
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  columns=fullflexible,
+  backgroundcolor=\color{gray!8}
+}
+
+\title{\textbf{CS 682 Final Project Report}\\[4pt]
+CampusCart: IITB Campus Marketplace and Community Exchange Platform}
+\author{Team Prismym\\
+Mayank Mehar (24m0785) \and Nitesh Singh (22b0919) \\
+Ahil Khan (22b0911) \and Sukhmanjot (22b0976)}
+\date{April 2026}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Abstract}
+CampusCart is a web platform designed for the IIT Bombay ecosystem to unify fragmented student workflows around buying/selling items, recovering lost belongings, short-term pooling, and academic collaboration. Prior to this project, these interactions were distributed across informal channels such as private chats and ad hoc social posts, resulting in poor discoverability, low trust, and weak moderation.
+
+Our target users are primarily IITB students with institutional email IDs, with design choices centered on safety, low friction onboarding, and role-based governance. The final system implements authenticated campus-only access, marketplace workflows (buy/sell, auction, lost/found, library exchange), social/utility modules (teams and pooling), and a consolidated in-app notification layer.
+
+The tech stack includes Spring Boot 4, Spring Security, Spring MVC, Thymeleaf, JPA/Hibernate, H2 (file-based), Maven, and Selenium-based UI testing automation. The repository is hosted at:\\
+\url{https://github.com/ahiliitb/CS682_Project.git}
+
+The most challenging and unique parts of our build were:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Campus-secure onboarding and access control}: institutional email-only sign-up, SSO-inspired one-time code login flow, and role enforcement for admin-only actions.
+    \item \textbf{Cross-module consistency}: designing a shared domain model and notification strategy across buy/sell, auctions, lost/found, library exchange, moderation, and team workflows.
+    \item \textbf{Governance and reliability}: integrating moderation and admin-restricted statistics, while preserving usability for student users.
+\end{enumerate}
+
+\newpage
+\section{Requirements Specification}
+
+\subsection{Functional Requirements}
+Table \ref{tab:functional-req} summarizes major use-cases delivered in the final system.
+
+\begin{longtable}{p{0.11\textwidth} p{0.22\textwidth} p{0.17\textwidth} p{0.42\textwidth}}
+\caption{Top Functional Requirements and Status} \label{tab:functional-req} \\
+\toprule
+\textbf{ID} & \textbf{Use Case} & \textbf{Primary Actor} & \textbf{Implemented Behavior} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Use Case} & \textbf{Primary Actor} & \textbf{Implemented Behavior} \\
+\midrule
+\endhead
+FR-01 & Register/Login & Student & Registration with IITB email constraints, secure login, and session management. \\
+FR-02 & Email Verification & Student & Email-based verification flow completed to validate account ownership before full platform use. \\
+FR-03 & SSO Code Login & Student/Admin & One-time access code generation and consumption with expiry checks. \\
+FR-04 & Role Authorization & Admin/Student & Student and Admin roles with admin-only module access for sensitive actions. \\
+FR-05 & Buy/Sell Listing & Student & Create, browse, and transact listings with status updates and owner controls. \\
+FR-06 & Auction Workflow & Student & Post auctions, place bids, notify participants, and close auctions by rules. \\
+FR-07 & Lost/Found & Student & Report lost/found items and mark final resolution states. \\
+FR-08 & Rating Integrity & Student & Ratings allowed only between actual transacting buyer-seller pairs. \\
+FR-09 & Item Image Upload & Student & Item photo upload and retrieval integrated for listing credibility and UX. \\
+FR-10 & Library Exchange & Student & Add books, request borrow, approve/return lifecycle, and ownership transitions. \\
+FR-11 & Team Module & Student & Team creation/join management with enforced team-size restriction policy. \\
+FR-12 & Pooling & Student & Create/join pooling groups for travel/order pooling and coordination. \\
+FR-13 & Notifications & Student/Admin & In-app notifications for transactions, moderation, and security-relevant events. \\
+FR-14 & Suggested Price & Student & Suggested price generation based on historical listing context to aid pricing. \\
+FR-15 & Statistics Dashboard & Admin & Access to platform metrics restricted to admin users for governance. \\
+FR-16 & Moderation & Admin & Report review, status transitions, and administrative resolution mechanisms. \\
+FR-17 & Deployment Pipeline & Admin/Dev Team & Deployment setup completed with environment-specific configuration and runtime verification. \\
+FR-18 & Test Automation & Dev Team & Selenium and tool-based checks for key user journeys and regression prevention. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Non-Functional Requirements}
+\textbf{Performance:}
+\begin{itemize}[leftmargin=*]
+    \item Typical page load and CRUD operations should complete in low-latency campus network conditions.
+    \item Query paths for listing and dashboard screens are optimized via bounded result retrieval and filtered data fetches.
+\end{itemize}
+
+\textbf{Scalability:}
+\begin{itemize}[leftmargin=*]
+    \item Modular service-oriented code structure enables independent optimization of high-traffic modules.
+    \item Deployment artifacts and configuration profiles support scale-out through containerized environments.
+\end{itemize}
+
+\textbf{Security:}
+\begin{itemize}[leftmargin=*]
+    \item Role-based access restrictions protect admin-only capabilities.
+    \item Sensitive platform actions are session-protected, and account onboarding is institutional-domain constrained.
+    \item One-time SSO code flow reduces risk from long-lived credential reuse in privileged flows.
+\end{itemize}
+
+\textbf{Usability:}
+\begin{itemize}[leftmargin=*]
+    \item Unified dashboard experience with module-oriented navigation.
+    \item Human-readable workflows and contextual notifications reduce confusion and missed actions.
+\end{itemize}
+
+\subsection{Requirement Traceability}
+Requirements directly informed design decisions:
+\begin{itemize}[leftmargin=*]
+    \item Campus exclusivity requirements drove IITB email checks, verification, and role-aware authentication middleware.
+    \item Trust/safety requirements drove moderation, rating restrictions, and admin-only statistics visibility.
+    \item Marketplace usability requirements drove image upload, suggested price, and cohesive notification integration.
+    \item Operational reliability requirements drove selenium-based regression checks and deployment-focused readiness.
+\end{itemize}
+
+\newpage
+\section{System Design}
+
+\subsection{High-Level Architecture and Rationale}
+CampusCart follows a layered MVC architecture:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Presentation Layer}: Thymeleaf templates for authentication, dashboard, and module-specific pages.
+    \item \textbf{Controller Layer}: HTTP endpoint orchestration and validation.
+    \item \textbf{Service Layer}: Core business rules for buy/sell, auctions, moderation, notifications, library, and teams.
+    \item \textbf{Persistence Layer}: JPA repositories and entity models persisted in H2 file-backed database.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.92\textwidth}{
+\textbf{Architecture Diagram Placeholder (Replace with annotated drawing)}\\[3pt]
+Client Browser $\rightarrow$ Spring MVC Controllers $\rightarrow$ Service Layer $\rightarrow$ JPA Repositories $\rightarrow$ H2 DB\\
+\vspace{3pt}
+Cross-cutting components: Spring Security, Session JDBC, Notification Service, Moderation, Admin Guard.
+}}
+\caption{High-level system architecture}
+\end{figure}
+
+\textbf{Why this architecture?}
+\begin{itemize}[leftmargin=*]
+    \item It balances development speed and maintainability for a semester-scale full-stack project.
+    \item It supports clear module ownership across team members.
+    \item It naturally maps to Spring Boot conventions and testing/deployment workflows.
+\end{itemize}
+
+\subsection{Component-Level Design}
+Major components include:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Auth + Security Component}: Login, role loading, session handling, access restrictions.
+    \item \textbf{Marketplace Component}: Buy/sell listing lifecycle, auction lifecycle, rating and pricing support.
+    \item \textbf{Community Component}: Team and pooling flows with eligibility and size checks.
+    \item \textbf{Library Component}: Book inventory and borrow-return lifecycle.
+    \item \textbf{Moderation Component}: User report triage and resolution pipeline.
+    \item \textbf{Notification Component}: In-app event propagation across modules.
+\end{itemize}
+
+\subsection{Data Model}
+Core entities implemented in the codebase include User, Item, ItemPhoto, UserItemRelation, IitbHighlightsDocument, IitbHighlightItem and module-specific support models.
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.92\textwidth}{
+\textbf{ER Diagram Placeholder (Replace with hand-drawn or generated ER chart)}\\[3pt]
+User (1) -- (N) Item\\
+Item (1) -- (N) ItemPhoto\\
+User (N) -- (N) Item through UserItemRelation\\
+User (1) -- (N) Notifications
+}}
+\caption{Simplified data model overview}
+\end{figure}
+
+\subsection{API Inventory}
+Representative APIs provided:
+\begin{itemize}[leftmargin=*]
+    \item Authentication and registration endpoints (login, signup, role-aware access).
+    \item Buy/sell and auction endpoints for lifecycle operations.
+    \item Lost/found, pooling, team, library, and moderation endpoints.
+    \item Notification retrieval endpoints and admin-only statistics routes.
+\end{itemize}
+
+\subsection{Alternative Designs and Trade-offs}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{DB choice}: We finalized H2 file mode for portable demos and low setup friction, trading off production-grade horizontal DB scaling.
+    \item \textbf{Frontend choice}: Server-side rendering with Thymeleaf enabled rapid iteration, trading off richer SPA interactivity.
+    \item \textbf{Notification choice}: In-app notifications prioritized predictable UX and reduced external dependency complexity.
+    \item \textbf{Auth path}: Campus-constrained authentication plus one-time SSO-like code was simpler to complete in semester scope than full federated enterprise integration.
+\end{itemize}
+
+\newpage
+\section{Implementation Details}
+
+\subsection{Tech Stack Justification}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Spring Boot 4 + Java 21}: reliable backend foundation and fast module development.
+    \item \textbf{Spring Security}: role-aware authorization and secure endpoint access.
+    \item \textbf{Spring Data JPA}: reduced persistence boilerplate and rapid schema evolution.
+    \item \textbf{Thymeleaf}: integrated backend-templating for rapid UI delivery.
+    \item \textbf{Maven}: standard build lifecycle and reproducible dependency management.
+    \item \textbf{H2 (file mode)}: easy local setup and consistent class/lab demos.
+    \item \textbf{Selenium tooling}: automated user-flow validation and regression checks.
+\end{itemize}
+
+\subsection{Code Structure Overview}
+The repository follows a conventional Spring layout:
+
+\begin{lstlisting}[language=bash,caption={Repository code organization overview}]
+src/main/java/com/SE/final_project/
+  config/
+  controller/
+  model/
+  repository/
+  service/
+src/main/resources/
+  application.properties
+  templates/
+  static/data/
+scripts/selenium_iitb/
+\end{lstlisting}
+
+\subsection{Implemented Key Modules}
+\textbf{Authentication and Access Control}
+\begin{itemize}[leftmargin=*]
+    \item IITB email-based registration and verification.
+    \item SSO-style one-time code login flow with role synchronization.
+    \item Admin-restricted routes for moderation and statistics.
+\end{itemize}
+
+\textbf{Marketplace and Exchange}
+\begin{itemize}[leftmargin=*]
+    \item Buy/sell with item photo uploads, suggested pricing, and transaction-linked ratings.
+    \item Auction module for bids and closure flow.
+    \item Lost/found and library workflows with clear lifecycle states.
+\end{itemize}
+
+\textbf{Community and Governance}
+\begin{itemize}[leftmargin=*]
+    \item Team module with team-size restrictions.
+    \item Pooling workflows for practical student collaboration use-cases.
+    \item Moderation + in-app notifications for platform trust and operational awareness.
+\end{itemize}
+
+\subsection{Repository and Development Workflow Evidence}
+\textbf{Repository Link:} \url{https://github.com/ahiliitb/CS682_Project.git}
+
+\textbf{Active Version Control Evidence}
+\begin{itemize}[leftmargin=*]
+    \item Continuous commit history throughout staged feature delivery.
+    \item Merge-driven integration on the main branch for release readiness.
+\end{itemize}
+
+\textbf{Branching Strategy}
+\begin{itemize}[leftmargin=*]
+    \item Feature branches for module-level changes.
+    \item Final integration and stabilization on main branch.
+\end{itemize}
+
+\textbf{Issue Tracking and Code Review}
+\begin{itemize}[leftmargin=*]
+    \item Team-level issue/task tracking was maintained against module milestones.
+    \item Cross-member review performed before final integration.
+\end{itemize}
+
+\textit{Note: Add screenshots of branch graph, issue board, and review comments in the Appendix for final submission PDF.}
+
+\subsection{README and Setup}
+The repository includes README-level setup guidance and Maven-based launch flow. Typical run pattern:
+
+\begin{lstlisting}[language=bash,caption={Project run commands used during validation}]
+./mvnw.cmd -DskipTests compile
+./mvnw.cmd spring-boot:run
+\end{lstlisting}
+
+\newpage
+\section{Testing and Validation}
+
+\subsection{Testing Strategy}
+Testing combined unit-level checks, integration checks, and browser-flow validation:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Build validation}: Maven compile and project startup checks.
+    \item \textbf{Functional validation}: end-to-end manual workflow verification for each module.
+    \item \textbf{Automation}: Selenium scripts/tooling for critical UI regressions.
+\end{itemize}
+
+\subsection{Representative Test Cases}
+\begin{longtable}{p{0.10\textwidth} p{0.40\textwidth} p{0.24\textwidth} p{0.18\textwidth}}
+\caption{Sample test cases used for validation} \\
+\toprule
+\textbf{TC} & \textbf{Scenario} & \textbf{Expected Result} & \textbf{Status} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{TC} & \textbf{Scenario} & \textbf{Expected Result} & \textbf{Status} \\
+\midrule
+\endhead
+TC-01 & Register with non-IITB email & Registration blocked with validation feedback & Pass \\
+TC-02 & Verify account using email verification step & Verified users can proceed to full login flow & Pass \\
+TC-03 & Login with one-time SSO code & Successful login only before code expiry and single-use consumption & Pass \\
+TC-04 & Attempt admin statistics page as student & Access denied/redirected & Pass \\
+TC-05 & Rate without completed purchase relation & Rating action rejected & Pass \\
+TC-06 & Upload item images and fetch listing detail & Images persist and render correctly & Pass \\
+TC-07 & Join team beyond size cap & Join rejected with team-size policy message & Pass \\
+TC-08 & Suggested price shown during item listing & Non-empty, context-based suggestion displayed & Pass \\
+TC-09 & Moderation flow from report to resolution & State transitions complete with notifications & Pass \\
+TC-10 & Selenium smoke suite over login + listing path & No regressions in primary journey & Pass \\
+\bottomrule
+\end{longtable}
+
+\subsection{Major Bugs Found and Fixed}
+\begin{itemize}[leftmargin=*]
+    \item Role synchronization issue where expected admin experience was not visible until role state was refreshed.
+    \item Notification coupling issue simplified by retaining only in-app notification delivery path.
+    \item Rating integrity issue fixed by enforcing transaction-linked rating permission checks.
+    \item Team overflow issue fixed by enforcing team-size restriction in join logic.
+\end{itemize}
+
+\section{Lessons Learned and Future Work}
+
+\subsection{What Worked Well}
+\begin{itemize}[leftmargin=*]
+    \item Modular decomposition allowed parallel development across team members.
+    \item Shared conventions in Spring layers reduced merge conflict complexity.
+    \item Security-first defaults (role guards, verification, admin controls) prevented major downstream rework.
+\end{itemize}
+
+\subsection{What Failed or Was Hard}
+\begin{itemize}[leftmargin=*]
+    \item Cross-module consistency in notifications and permissions required multiple rounds of refactoring.
+    \item Coordinating UI flows and backend states for several modules increased integration complexity.
+    \item Deployment hardening took longer than expected due to environment-specific settings.
+\end{itemize}
+
+\subsection{Top 3 Next-Step Enhancements (with effort estimates)}
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Enterprise OAuth2/OIDC integration} (Medium-High effort, 2--3 weeks): Replace code-based SSO simulation with production identity provider integration.
+    \item \textbf{Advanced search and recommendation engine} (High effort, 3--4 weeks): semantic ranking, category-aware filtering, and user-personalized suggestions.
+    \item \textbf{Observability + production analytics stack} (Medium effort, 2 weeks): metrics dashboards, event tracing, and anomaly detection for moderation and abuse patterns.
+\end{enumerate}
+
+\subsection{What We Would Do Differently}
+\begin{itemize}[leftmargin=*]
+    \item Define strict API contracts and event schema earlier.
+    \item Introduce structured test automation from the first sprint, not mid-way.
+    \item Reserve dedicated hardening sprint for security, deployment, and role checks.
+    \item Make issue templates and review checklists mandatory from day one.
+\end{itemize}
+
+\subsection{Tips for Future Teams}
+\begin{enumerate}[leftmargin=*]
+    \item Lock scope for core functionality early, then add bonus modules incrementally.
+    \item Write basic architecture and state diagrams before implementing endpoints.
+    \item Automate at least one end-to-end smoke path as soon as login works.
+    \item Track permissions and role expectations in a single shared document.
+\end{enumerate}
+
+\subsection{AI Integration Opportunities}
+AI could further assist in:
+\begin{itemize}[leftmargin=*]
+    \item Dynamic fraud and spam signal detection in listings and user behavior.
+    \item Smart auto-tagging and quality scoring of uploaded listing images.
+    \item Better suggested price calibration using historical and seasonal campus trends.
+    \item AI-assisted moderation triage (priority ranking of reports).
+\end{itemize}
+
+\newpage
+\section{Team Contribution Statement}
+
+\subsection*{Team Coordination}
+The team followed module-based ownership with periodic integration checkpoints, shared coding conventions, and staged merge cycles before release validation.
+
+\begin{longtable}{p{0.25\textwidth} p{0.69\textwidth}}
+\toprule
+\textbf{Member} & \textbf{Contribution Summary} \\
+\midrule
+Mayank Mehar (24m0785) & Repository initialization, backend project bootstrap, initial schema/API setup, email-based verification completion, and integration support. \\
+Nitesh Singh (22b0919) & Dashboard and auth-flow improvements, SSO code flow, role-control integration, moderation and notifications integration, suggested price completion, admin-only statistics restriction, and team-size restriction implementation. \\
+Ahil Khan (22b0911) & Frontend page/controller work, selenium/tooling implementation, deployment setup completion, transaction-constrained rating behavior, and image upload capability in item lifecycle. \\
+Sukhmanjot (22b0976) & Architecture planning, user flow design artifacts, report drafting and documentation consolidation. \\
+\bottomrule
+\end{longtable}
+
+\subsection*{AI Usage Disclosure}
+AI assistants (including GitHub Copilot and LLM-based support tools) were used for boilerplate generation, refactoring support, documentation drafting, and rapid solution exploration. Final integration, testing decisions, and acceptance criteria remained team-owned.
+
+\newpage
+\section{Appendix}
+
+\subsection{Appendix A: Diagram Slots for Final PDF}
+\begin{itemize}[leftmargin=*]
+    \item Detailed architecture diagram (annotated, final cleaned version).
+    \item ER diagram with cardinalities and key constraints.
+    \item Workflow state diagrams for Auction, Library, and Moderation modules.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\fbox{\parbox{0.9\textwidth}{
+\textbf{Insert Screenshot Set A}\\
+1) Git commit graph, 2) Issue tracking board, 3) Review comments screenshot.
+}}
+\caption{Repository workflow evidence artifacts}
+\end{figure}
+
+\subsection{Appendix B: Additional Results and Reflections}
+\begin{itemize}[leftmargin=*]
+    \item Notable reliability improvement after role-sync and permission hardening.
+    \item Better user clarity after centralized in-app notification updates.
+    \item Team observation: high coupling risks emerge quickly when multiple modules share user-event transitions; an event contract document should be maintained from sprint one.
+\end{itemize}
+
+\textbf{Submission Note:} The screencast section has been intentionally omitted from this report body as requested by the project owner for this draft generation step.
+
+\end{document}

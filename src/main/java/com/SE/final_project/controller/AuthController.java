@@ -263,6 +263,16 @@ public class AuthController {
 
     @GetMapping("/dashboard/stats")
     public String stats(@AuthenticationPrincipal UserDetails userDetails, Model model) {
+        // Check if user has ADMIN role
+        User currentUser = userRepository.findByUsername(userDetails.getUsername());
+        if (currentUser == null || currentUser.getRole() != UserRole.ADMIN) {
+            model.addAttribute("errorMessage", "Access denied. Statistics dashboard is restricted to administrators.");
+            addCommonDashboardData(model, userDetails.getUsername());
+            model.addAttribute("activeTab", "dashboard");
+            addIitbHighlights(model);
+            return "dashboard";
+        }
+        
         addCommonDashboardData(model, userDetails.getUsername());
         model.addAttribute("activeTab", "stats");
         model.addAttribute("totalUsers", statisticsService.getTotalUsers());

@@ -48,17 +48,18 @@ public class BuySellService {
                 .toList();
     }
 
-    public double getSuggestedListingPrice() {
+    public Double getSuggestedListingPrice() {
         List<Item> activeListings = itemRepository.findByActiveTrueOrderByCreatedAtDesc();
-        if (activeListings.isEmpty()) {
-            return 499.0;
+        // Return null (placeholder) if insufficient historical data
+        if (activeListings.size() < 3) {
+            return null;
         }
 
         double averagePrice = activeListings.stream()
                 .map(Item::getPrice)
                 .mapToDouble(Double::doubleValue)
                 .average()
-                .orElse(499.0);
+                .orElse(0.0);
         return Math.max(1.0, Math.round(averagePrice));
     }
 
