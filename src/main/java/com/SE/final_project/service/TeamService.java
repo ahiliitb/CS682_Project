@@ -15,8 +15,6 @@ import com.SE.final_project.repository.UserRepository;
 
 @Service
 public class TeamService {
-
-    private static final int MAX_TEAM_SIZE = 50;
     
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
@@ -53,13 +51,16 @@ public class TeamService {
         return teamIds;
     }
 
-    public Team createTeam(String creatorUsername, String name, String courseCode, String description) {
+    public Team createTeam(String creatorUsername, String name, String courseCode, String description, Integer maxSize) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Team name is required.");
         }
+        if (maxSize == null || maxSize < 1) {
+            throw new IllegalArgumentException("Team size must be at least 1.");
+        }
 
         User creator = requireUser(creatorUsername);
-        Team team = new Team(name.trim(), safeText(courseCode), safeText(description), creator);
+        Team team = new Team(name.trim(), safeText(courseCode), safeText(description), creator, maxSize);
         team.addMember(creator);
         return teamRepository.save(team);
     }
@@ -77,8 +78,8 @@ public class TeamService {
         }
         
         // Check team size restriction
-        if (team.getMembers().size() >= MAX_TEAM_SIZE) {
-            throw new IllegalArgumentException("Team has reached maximum size of " + MAX_TEAM_SIZE + " members.");
+        if (team.getMembers().size() >= team.getMaxSize()) {
+            throw new IllegalArgumentException("Team has reached maximum size of " + team.getMaxSize() + " members.");
         }
 
         team.addMember(user);

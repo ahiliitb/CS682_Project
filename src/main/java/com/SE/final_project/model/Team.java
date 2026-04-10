@@ -30,6 +30,8 @@ public class Team {
 
     private LocalDateTime createdAt;
 
+    private Integer maxSize = 50;
+
     @ManyToOne
     @JoinColumn(name = "creator_id")
     private User creator;
@@ -51,6 +53,16 @@ public class Team {
         this.description = description;
         this.creator = creator;
         this.createdAt = LocalDateTime.now();
+        this.maxSize = 50;
+    }
+
+    public Team(String name, String courseCode, String description, User creator, Integer maxSize) {
+        this.name = name;
+        this.courseCode = courseCode;
+        this.description = description;
+        this.creator = creator;
+        this.createdAt = LocalDateTime.now();
+        this.maxSize = maxSize != null && maxSize > 0 ? maxSize : 50;
     }
 
     public Long getId() {
@@ -83,5 +95,13 @@ public class Team {
 
     public void addMember(User user) {
         this.members.add(user);
+    }
+
+    public Integer getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(Integer maxSize) {
+        this.maxSize = maxSize != null && maxSize > 0 ? maxSize : 50;
     }
 }

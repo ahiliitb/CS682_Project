@@ -20,10 +20,14 @@ public class TeamController {
     public String createTeam(@RequestParam String name,
                              @RequestParam(required = false) String courseCode,
                              @RequestParam(required = false) String description,
+                             @RequestParam(required = false) Integer maxSize,
                              java.security.Principal principal,
                              RedirectAttributes redirectAttributes) {
         try {
-            teamService.createTeam(principal.getName(), name, courseCode, description);
+            if (maxSize == null || maxSize < 1) {
+                maxSize = 50;
+            }
+            teamService.createTeam(principal.getName(), name, courseCode, description, maxSize);
             redirectAttributes.addFlashAttribute("successMessage", "Team created successfully.");
         } catch (IllegalArgumentException exception) {
             redirectAttributes.addFlashAttribute("errorMessage", exception.getMessage());

@@ -195,7 +195,7 @@
                 <a href="/dashboard/teams" class="nav-item" th:classappend="${activeTab == 'teams' ? 'active' : ''}">
                     <span class="nav-item-icon">&#128101;</span>Teams
                 </a>
-                <a href="/dashboard/stats" class="nav-item" th:classappend="${activeTab == 'stats' ? 'active' : ''}">
+                <a href="/dashboard/stats" class="nav-item" th:classappend="${activeTab == 'stats' ? 'active' : ''}" th:if="${isAdmin}">
                     <span class="nav-item-icon">&#128200;</span>Statistics
                 </a>
                 <a href="/dashboard/ratings" class="nav-item" th:classappend="${activeTab == 'ratings' ? 'active' : ''}">
@@ -248,7 +248,7 @@
                             <div class="form-field">
                                 <label for="listingPrice">Price (INR)</label>
                                 <input id="listingPrice" name="price" type="number" min="1" step="0.01" th:value="${suggestedListingPrice}" placeholder="499" required />
-                                <div class="field-helper" th:text="'Suggested from current listings: Rs. ' + ${#numbers.formatDecimal(suggestedListingPrice, 1, 0)}">Suggested from current listings: Rs. 499</div>
+                                    <div class="field-helper" th:if="${suggestedListingPrice != null}" th:text="'Suggested from current listings: Rs. ' + ${#numbers.formatDecimal(suggestedListingPrice, 1, 0)}">Suggested price</div>
                             </div>
                         </div>
                         <div class="form-grid">
@@ -571,6 +571,10 @@
                                     <label for="courseCode">Course code</label>
                                     <input id="courseCode" name="courseCode" type="text" placeholder="CS101 / EE200" />
                                 </div>
+                                <div class="form-field">
+                                    <label for="maxSize">Max team size</label>
+                                    <input id="maxSize" name="maxSize" type="number" min="1" placeholder="50" value="50" />
+                                </div>
                             </div>
                             <div class="form-field">
                                 <label for="description">Description</label>
@@ -594,7 +598,7 @@
                                 </div>
                                 <p class="team-muted" th:text="${team.description != null and !team.description.isBlank() ? team.description : 'No description provided.'}"></p>
                                 <div class="team-badges">
-                                    <span class="team-badge" th:text="'Members: ' + ${team.members != null ? team.members.size() : 0}">Members: 0</span>
+                                    <span class="team-badge" th:text="'Members: ' + ${team.members != null ? team.members.size() : 0} + ' / ' + (${team.maxSize != null ? team.maxSize : 50})">Members: 0 / 50</span>
                                     <span class="team-badge" th:text="'Creator: ' + ${team.creator != null ? team.creator.username : 'CampusConnect'}">Creator</span>
                                 </div>
                                 <div class="team-actions">
