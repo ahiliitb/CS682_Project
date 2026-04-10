@@ -228,35 +228,61 @@ The repository follows a conventional Spring layout:
 \begin{lstlisting}[language=bash,caption={Repository code organization overview}]
 src/main/java/com/SE/final_project/
   config/
-  controller/
-  model/
-  repository/
-  service/
+  controller/          (Authentication, DashBoard, Team, BuySell, etc.)
+  model/               (User, Item, Team, UserItemRelation, etc.)
+  repository/          (Spring Data JPA repositories)
+  service/             (Business logic: BuySell, Team, Statistics, etc.)
 src/main/resources/
   application.properties
-  templates/
-  static/data/
-scripts/selenium_iitb/
+  templates/           (Thymeleaf HTML templates)
+  static/data/         (Static assets and data files)
+scripts/selenium_iitb/ (Automation testing scripts)
 \end{lstlisting}
+
+\subsubsection*{Detailed Implementation Notes}
+
+\textbf{Suggested Price Logic (Nitesh):}
+\begin{itemize}[leftmargin=*]
+    \item File: \texttt{BuySellService.java}
+    \item Returns \textbf{null} (placeholder) if fewer than 3 active listings exist (no override with hardcoded value).
+    \item Calculates average price from all active listings when sufficient historical data is available.
+    \item Prevents misleading price suggestions and provides meaningful context-aware pricing hints to new sellers.
+\end{itemize}
+
+\textbf{Admin-Only Statistics Access (Nitesh):}
+\begin{itemize}[leftmargin=*]
+    \item File: \texttt{AuthController.java}, endpoint: \texttt{/dashboard/stats}
+    \item Validates user's \texttt{UserRole} against \texttt{UserRole.ADMIN} before rendering statistics dashboard.
+    \item Non-admin users see access-denied message and are redirected to default dashboard view.
+    \item Protects sensitive platform metrics (total users, transactions, activity counts) from unauthorized visibility.
+\end{itemize}
+
+\textbf{Team Size Restriction (Nitesh):}
+\begin{itemize}[leftmargin=*]
+    \item File: \texttt{TeamService.java}, constant: \texttt{MAX\_TEAM\_SIZE = 50}
+    \item Enforced in \texttt{joinTeam()} method before adding member to team.
+    \item Prevents unbounded growth of team memberships and ensures manageable team collaboration scale.
+    \item Clear error message: ``Team has reached maximum size of 50 members.''
+\end{itemize}
 
 \subsection{Implemented Key Modules}
 \textbf{Authentication and Access Control}
 \begin{itemize}[leftmargin=*]
-    \item IITB email-based registration and verification.
+    \item IITB email-based registration and verification (completed).
     \item SSO-style one-time code login flow with role synchronization.
-    \item Admin-restricted routes for moderation and statistics.
+    \item Admin-restricted routes for moderation and statistics dashboard (completed with role check enforcement).
 \end{itemize}
 
 \textbf{Marketplace and Exchange}
 \begin{itemize}[leftmargin=*]
-    \item Buy/sell with item photo uploads, suggested pricing, and transaction-linked ratings.
+    \item Buy/sell with item photo uploads, suggested pricing logic (completed with placeholder threshold), and transaction-linked ratings.
     \item Auction module for bids and closure flow.
     \item Lost/found and library workflows with clear lifecycle states.
 \end{itemize}
 
 \textbf{Community and Governance}
 \begin{itemize}[leftmargin=*]
-    \item Team module with team-size restrictions.
+    \item Team module with enforced team-size restrictions (maximum 50 members per team, completed).
     \item Pooling workflows for practical student collaboration use-cases.
     \item Moderation + in-app notifications for platform trust and operational awareness.
 \end{itemize}
@@ -394,7 +420,7 @@ The team followed module-based ownership with periodic integration checkpoints, 
 \textbf{Member} & \textbf{Contribution Summary} \\
 \midrule
 Mayank Mehar (24m0785) & Repository initialization, backend project bootstrap, initial schema/API setup, email-based verification completion, and integration support. \\
-Nitesh Singh (22b0919) & Dashboard and auth-flow improvements, SSO code flow, role-control integration, moderation and notifications integration, suggested price completion, admin-only statistics restriction, and team-size restriction implementation. \\
+Nitesh Singh (22b0919) & Repository initialization support, Dashboard and auth-flow improvements, SSO code flow (one-time code generation/validation), role-control integration, Moderation and notifications integration, Suggested price completion (placeholder logic when $<3$ historical listings), Admin-only statistics dashboard restriction enforcement, Team-size restriction (max 50 members) implementation. \\
 Ahil Khan (22b0911) & Frontend page/controller work, selenium/tooling implementation, deployment setup completion, transaction-constrained rating behavior, and image upload capability in item lifecycle. \\
 Sukhmanjot (22b0976) & Architecture planning, user flow design artifacts, report drafting and documentation consolidation. \\
 \bottomrule
