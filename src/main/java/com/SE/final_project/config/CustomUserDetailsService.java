@@ -3,6 +3,7 @@ package com.SE.final_project.config;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.security.authentication.DisabledException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +32,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User appUser = userRepository.findByUsername(username);
         if (appUser == null) {
             throw new UsernameNotFoundException("User not found: " + username);
+        }
+
+        if (!appUser.isVerified()) {
+        throw new DisabledException("Email not verified. Please check your inbox.");
         }
 
         UserRole resolvedRole = resolveRoleForEmail(appUser.getEmail());

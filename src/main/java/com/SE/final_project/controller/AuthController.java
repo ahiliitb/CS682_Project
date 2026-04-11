@@ -3,6 +3,8 @@ package com.SE.final_project.controller;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import com.SE.final_project.service.EmailService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -55,6 +57,8 @@ public class AuthController {
     private final NotificationService notificationService;
     private final UserDetailsService userDetailsService;
     private final SsoCodeService ssoCodeService;
+    private final EmailService emailService;
+
 
     @Value("${app.security.admin-emails:}")
     private String adminEmailsConfig;
@@ -65,7 +69,7 @@ public class AuthController {
             LostFoundService lostFoundService, AuctionService auctionService,
             PoolingService poolingService, LibraryService libraryService,
             NotificationService notificationService, UserDetailsService userDetailsService,
-            SsoCodeService ssoCodeService) {
+            SsoCodeService ssoCodeService, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.iitbHighlightsService = iitbHighlightsService;
@@ -79,6 +83,7 @@ public class AuthController {
         this.notificationService = notificationService;
         this.userDetailsService = userDetailsService;
         this.ssoCodeService = ssoCodeService;
+        this.emailService = emailService; 
     }
 
     @GetMapping("/login")
@@ -93,7 +98,11 @@ public class AuthController {
             model.addAttribute("message", "You have been logged out successfully.");
         }
         if (error != null) {
-            model.addAttribute("error", "Invalid username or password.");
+            if (error.equals("notVerified")) {
+                model.addAttribute("error", "Please verify your email before logging in.");
+            } else {
+                model.addAttribute("error", "Invalid username or password.");
+            }
         }
         return "login";
     }
@@ -128,6 +137,7 @@ public class AuthController {
             user.setEmail(email.trim());
             user.setUsername(uniqueUsernameFromEmail(email.trim()));
             user.setPassword(passwordEncoder.encode("sso-login-placeholder"));
+            user.setVerified(true);
         }
         user.setRole(resolveRoleForEmail(user.getEmail()));
         userRepository.save(user);
@@ -206,7 +216,19 @@ public class AuthController {
         user.setEmail(email.trim());
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(resolveRoleForEmail(email));
+        user.setVerified(false);
+        user.setVerificationToken(UUID.randomUUID().toString());
         userRepository.save(user);
+
+
+        try {
+            emailService.sendVerificationEmail(user.getEmail(), user.getVerificationToken());
+            redirectAttributes.addFlashAttribute("message",
+                "Account created! Please check your email to verify your account.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("message",
+                "Account created but we couldn't send the verification email. Contact support.");
+        }
 
         redirectAttributes.addFlashAttribute("message", "Account created. Please log in.");
         return "redirect:/login";
@@ -220,6 +242,28 @@ public class AuthController {
         model.addAttribute("loggedIn", false);
         return "home";
     }
+
+    @GetMapping("/verify")
+    public String verifyEmail(@RequestParam String token,
+                          RedirectAttributes redirectAttributes) {
+
+    User user = userRepository.findByVerificationToken(token);
+
+    if (user == null) {
+        redirectAttributes.addFlashAttribute("error", "Invalid or expired verification link.");
+        return "redirect:/login";
+    }
+
+    user.setVerified(true);
+    user.setVerificationToken(null); // clear token after use
+    userRepository.save(user);
+
+    redirectAttributes.addFlashAttribute("message",
+        "Email verified! You can now log in.");
+    return "redirect:/login";
+    }
+
+
 
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal UserDetails userDetails, Model model) {

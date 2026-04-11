@@ -13,6 +13,13 @@ public class User {
     private String password;
     private String email;
 
+    @Column(nullable = false)
+    private boolean verified = false;     
+
+    @Column
+    private String verificationToken; 
+
+
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.STUDENT;
 
@@ -23,6 +30,7 @@ public class User {
         this.password = password;
         this.email = email;
         this.role = UserRole.STUDENT;
+        this.verified = false;   
     }
 
     // getters and setters
@@ -43,5 +51,13 @@ public class User {
     public UserRole getRole() { return role; }
 
     public void setRole(UserRole role) { this.role = role; }
+
+    public boolean isVerified() { return verified; }
+
+    public void setVerified(boolean verified) { this.verified = verified; }
+
+    public String getVerificationToken() { return verificationToken; }
+    
+    public void setVerificationToken(String token) { this.verificationToken = token; }    
 
 }

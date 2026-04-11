@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.DisabledException;
 
 @Configuration
 @EnableWebSecurity
@@ -16,13 +17,22 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/signup", "/register", "/sso", "/sso-login", "/css/**", "/data/**", "/h2-console/**").permitAll()
+                .requestMatchers("/", "/login", "/signup", "/register","/verify", "/sso", "/sso-login", "/css/**", "/data/**", "/h2-console/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/dashboard", true)
+                .defaultSuccessUrl("/dashboard")
+                .failureHandler((request, response, exception) -> {
+                    String errorMsg;
+                    if (exception instanceof DisabledException) {
+                        errorMsg = "notVerified";
+                    } else {
+                        errorMsg = "true";
+                    }
+                    response.sendRedirect("/login?error=" + errorMsg);
+                })
                 .permitAll()
             )
             .logout(logout -> logout
