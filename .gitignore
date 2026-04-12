@@ -34,6 +34,7 @@ build/
 
 ### Local data ###
 data/
+uploads/
 
 ### Node (Newman) ###
 node_modules/

@@ -1,0 +1,21 @@
+# Run the CampusCart app with persistent H2 DB and item uploads.
+#
+#   docker compose build
+#   docker compose up
+#
+# Image name matches Docker Hub: ahilkhaniitb/campuscart:latest
+# (Separate from compose.yaml, which is MySQL-only for local dev.)
+
+services:
+  app:
+    image: ahilkhaniitb/campuscart:latest
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - campusconnect-data:/app/data
+      - campusconnect-uploads:/app/uploads
+
+volumes:
+  campusconnect-data:
+  campusconnect-uploads:

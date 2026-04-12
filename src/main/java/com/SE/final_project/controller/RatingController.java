@@ -54,16 +54,12 @@ public class RatingController {
     private void populateRatingsModel(Principal principal, Model model) {
         String username = principal.getName();
         User currentUser = userRepository.findByUsername(username);
-        List<User> users = userRepository.findAll().stream()
-                .filter(user -> !user.getUsername().equalsIgnoreCase(username))
-                .toList();
-
         model.addAttribute("username", username);
         model.addAttribute("activeTab", "ratings");
         model.addAttribute("notifications", notificationService.getRecentForUser(username));
         model.addAttribute("unreadNotifications", notificationService.getUnreadCount(username));
         model.addAttribute("isAdmin", currentUser != null && currentUser.getRole() == UserRole.ADMIN);
-        model.addAttribute("users", users);
+        model.addAttribute("users", ratingService.getSellersBuyerPurchasedFrom(username));
         model.addAttribute("ratingsReceived", ratingService.getRatingsReceivedBy(username));
         model.addAttribute("averageRating", ratingService.getAverageRatingReceivedBy(username));
         model.addAttribute("ratingsCount", ratingService.getRatingsReceivedBy(username).size());

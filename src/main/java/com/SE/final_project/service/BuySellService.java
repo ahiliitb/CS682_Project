@@ -1,5 +1,6 @@
 package com.SE.final_project.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -64,7 +65,8 @@ public class BuySellService {
     }
 
     @Transactional
-    public Item createListing(String sellerUsername, String name, String description, double price, String visibilityValue) {
+    public Item createListing(String sellerUsername, String name, String description, double price, String visibilityValue,
+                              List<String> photoUrls) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Item name is required.");
         }
@@ -74,10 +76,40 @@ public class BuySellService {
 
         User seller = requireUser(sellerUsername);
         ListingVisibility visibility = parseVisibility(visibilityValue);
-        Item item = new Item(name.trim(), safeText(description), price, List.of(), seller.getUsername(), visibility);
+        List<String> urls = new ArrayList<>();
+        if (photoUrls != null) {
+            urls.addAll(photoUrls);
+        }
+        Item item = new Item(name.trim(), safeText(description), price, urls, seller.getUsername(), visibility);
         Item savedItem = itemRepository.save(item);
         relationRepository.save(new UserItemRelation(seller, savedItem, RelationType.SOLD));
         return savedItem;
+    }
+
+    @Transactional
+    public void updateListing(String ownerUsername, Long itemId, String name, String description, double price,
+                              String visibilityValue, List<String> newPhotoUrlsIfUploaded) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Item name is required.");
+        }
+        if (price <= 0) {
+            throw new IllegalArgumentException("Price must be greater than zero.");
+        }
+
+        Item item = itemRepository.findByIdAndActiveTrue(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Item is not available."));
+        if (item.getOwnerUsername() == null || !item.getOwnerUsername().equalsIgnoreCase(ownerUsername)) {
+            throw new IllegalArgumentException("You can only edit your own listings.");
+        }
+
+        item.setName(name.trim());
+        item.setDescription(safeText(description));
+        item.setPrice(price);
+        item.setVisibility(parseVisibility(visibilityValue));
+        if (newPhotoUrlsIfUploaded != null && !newPhotoUrlsIfUploaded.isEmpty()) {
+            item.setPhotos(new ArrayList<>(newPhotoUrlsIfUploaded));
+        }
+        itemRepository.save(item);
     }
 
     @Transactional

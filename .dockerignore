@@ -1,0 +1,22 @@
+# Maven output (built inside the image)
+target/
+
+# VCS and IDE
+.git/
+.gitattributes
+.idea/
+.vscode/
+*.iml
+
+# Node (Newman / root package.json)
+node_modules/
+
+# Local runtime data (H2, uploaded images)
+data/
+uploads/
+
+# Python venv (selenium scraper)
+scripts/selenium_iitb/.venv/
+
+# Large / non-build artifacts
+*.log

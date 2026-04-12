@@ -124,6 +124,43 @@
         .item-card { border: 1px solid #eee; border-radius: 10px; padding: 1rem; transition: box-shadow 0.2s; }
         .item-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .item-placeholder { background: #f5f7fa; height: 140px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; margin-bottom: 0.75rem; }
+        .item-photo { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; margin-bottom: 0.75rem; display: block; background: #f5f7fa; }
+        .listing-image-preview-box {
+            border: 2px dashed #c5cdd8;
+            border-radius: 12px;
+            background: #f4f7fb;
+            min-height: 200px;
+            max-height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .listing-image-preview-box.has-image {
+            border-style: solid;
+            border-color: #b8d4f5;
+            background: #fff;
+        }
+        .listing-image-preview-placeholder {
+            color: #8b96a8;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 1.25rem;
+            line-height: 1.4;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* [hidden] must stay display:none; our .listing-image-preview-img { display:block } was overriding it and left an empty half-box in the flex row */
+        .listing-image-preview-img[hidden] {
+            display: none !important;
+        }
+        .listing-image-preview-img:not([hidden]) {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            display: block;
+        }
         .item-title { font-weight: 600; color: #1a1a1a; margin-bottom: 0.25rem; }
         .item-price { color: #1877f2; font-weight: 600; }
 
@@ -132,6 +169,24 @@
         .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
         .btn-primary { background: #1877f2; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; margin-top: 1rem; }
         .btn-primary:hover { background: #166fe5; }
+
+        .buysell-edit-details { margin-top: 0.75rem; }
+        .buysell-edit-details > summary {
+            display: inline-block;
+            list-style: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #cfe0fb;
+            background: #fff;
+            color: #1877f2;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .buysell-edit-details > summary::-webkit-details-marker { display: none; }
+        .buysell-edit-details[open] > summary { margin-bottom: 0.5rem; }
+        .buysell-edit-form { padding: 0.85rem; border: 1px solid #e8ecf3; border-radius: 10px; background: #fafbfd; margin-top: 0.35rem; }
+        .buysell-edit-form .form-field { margin-bottom: 0.65rem; }
+        .buysell-edit-form .form-field:last-child { margin-bottom: 0; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -238,7 +293,7 @@
                     <div th:if="${successMessage != null}" class="flash-message success" th:text="${successMessage}"></div>
                     <div th:if="${errorMessage != null}" class="flash-message error" th:text="${errorMessage}"></div>
 
-                    <form th:action="@{/dashboard/buysell/list}" method="post" style="margin-bottom: 1.25rem;">
+                    <form th:action="@{/dashboard/buysell/list}" method="post" enctype="multipart/form-data" style="margin-bottom: 1.25rem;">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <div class="form-grid">
                             <div class="form-field">
@@ -249,6 +304,20 @@
                                 <label for="listingPrice">Price (INR)</label>
                                 <input id="listingPrice" name="price" type="number" min="1" step="0.01" th:value="${suggestedListingPrice}" placeholder="499" required />
                                     <div class="field-helper" th:if="${suggestedListingPrice != null}" th:text="'Suggested from current listings: Rs. ' + ${#numbers.formatDecimal(suggestedListingPrice, 1, 0)}">Suggested price</div>
+                            </div>
+                        </div>
+                        <div class="form-grid" style="margin-bottom: 1rem; align-items: start;">
+                            <div class="form-field">
+                                <label for="listingImage">Item photo (optional)</label>
+                                <input id="listingImage" name="image" type="file" accept="image/jpeg,image/png,image/gif,image/webp" />
+                                <div class="field-helper">JPEG, PNG, GIF, or WebP — up to 5 MB. Preview appears in the box.</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Preview</label>
+                                <div id="listingImagePreviewBox" class="listing-image-preview-box" role="img" aria-label="Selected image preview">
+                                    <span id="listingImagePreviewPlaceholder" class="listing-image-preview-placeholder">Choose a file to see it here</span>
+                                    <img id="listingImagePreviewImg" class="listing-image-preview-img" alt="" width="0" height="0" hidden />
+                                </div>
                             </div>
                         </div>
                         <div class="form-grid">
@@ -280,7 +349,11 @@
 
                     <div class="items-grid" th:if="${activeListings != null and !activeListings.isEmpty()}">
                         <article class="item-card" th:each="item : ${activeListings}">
-                            <div class="item-placeholder">Campus Listing</div>
+                            <img th:if="${item.photos != null and !item.photos.isEmpty()}"
+                                 class="item-photo"
+                                 th:src="${item.photos[0]}"
+                                 th:alt="${item.name}" />
+                            <div th:if="${item.photos == null or item.photos.isEmpty()}" class="item-placeholder">Campus Listing</div>
                             <div class="item-title" th:text="${item.name}">Item Name</div>
                             <p class="team-muted" th:text="${item.description != null and !item.description.isBlank() ? item.description : 'No description'}"></p>
                             <div class="team-badges" style="margin: 0.5rem 0;">
@@ -289,11 +362,44 @@
                             </div>
                             <div class="item-price" th:text="'Rs. ' + ${#numbers.formatDecimal(item.price, 1, 2)}">Rs. 500.00</div>
                             <div class="team-actions" style="margin-top: 0.75rem;">
-                                <form th:action="@{/dashboard/buysell/buy}" method="post" style="margin:0;">
+                                <form th:if="${item.ownerUsername == null or !item.ownerUsername.equalsIgnoreCase(username)}"
+                                      th:action="@{/dashboard/buysell/buy}" method="post" style="margin:0;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                     <input type="hidden" name="itemId" th:value="${item.id}" />
                                     <button class="btn-secondary" type="submit">Buy Now</button>
                                 </form>
+                                <details th:if="${item.ownerUsername != null and item.ownerUsername.equalsIgnoreCase(username)}" class="buysell-edit-details">
+                                    <summary>Edit listing</summary>
+                                    <form class="buysell-edit-form" th:action="@{/dashboard/buysell/edit}" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <input type="hidden" name="itemId" th:value="${item.id}" />
+                                        <div class="form-field">
+                                            <label th:for="${'edit-name-' + item.id}">Item name</label>
+                                            <input th:id="${'edit-name-' + item.id}" name="name" type="text" required th:value="${item.name}" />
+                                        </div>
+                                        <div class="form-field">
+                                            <label th:for="${'edit-price-' + item.id}">Price (INR)</label>
+                                            <input th:id="${'edit-price-' + item.id}" name="price" type="number" min="1" step="0.01" required th:value="${item.price}" />
+                                        </div>
+                                        <div class="form-field">
+                                            <label th:for="${'edit-vis-' + item.id}">Visibility</label>
+                                            <select th:id="${'edit-vis-' + item.id}" name="visibility">
+                                                <option value="PUBLIC" th:selected="${item.visibility == null or item.visibility.name() == 'PUBLIC'}">Public</option>
+                                                <option value="PRIVATE" th:selected="${item.visibility != null and item.visibility.name() == 'PRIVATE'}">Private</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-field">
+                                            <label th:for="${'edit-desc-' + item.id}">Description</label>
+                                            <textarea th:id="${'edit-desc-' + item.id}" name="description" rows="3" placeholder="Condition, pickup..." th:text="${item.description != null ? item.description : ''}"></textarea>
+                                        </div>
+                                        <div class="form-field">
+                                            <label th:for="${'edit-img-' + item.id}">New photo (optional)</label>
+                                            <input th:id="${'edit-img-' + item.id}" name="image" type="file" accept="image/jpeg,image/png,image/gif,image/webp" />
+                                            <div class="field-helper">Leave empty to keep the current image.</div>
+                                        </div>
+                                        <button class="btn-primary" type="submit" style="margin-top:0.5rem;">Save changes</button>
+                                    </form>
+                                </details>
                             </div>
                             <form th:action="@{/dashboard/report}" method="post" class="report-form">
                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
@@ -805,11 +911,15 @@
                 <div th:if="${activeTab == 'ratings'}">
                     <div class="content-header">
                         <h2>Ratings</h2>
-                        <p>Rate campus sellers and track the feedback you receive.</p>
+                        <p>Rate sellers you have bought from on Buy &amp; Sell, and see feedback others leave for you.</p>
                     </div>
 
                     <div th:if="${successMessage != null}" class="flash-message success" th:text="${successMessage}"></div>
                     <div th:if="${errorMessage != null}" class="flash-message error" th:text="${errorMessage}"></div>
+
+                    <div th:if="${users == null or users.isEmpty()}" class="flash-message" style="background:#eef2f7;color:#4a5568;border:1px solid #dbe3f0;">
+                        You can only rate sellers after you buy one of their listings. Complete a purchase on Buy &amp; Sell first; those sellers will then appear in the list below.
+                    </div>
 
                     <div class="summary-grid">
                         <div class="summary-tile">
@@ -827,15 +937,16 @@
                     </div>
 
                     <div class="content-card" style="padding: 0; box-shadow: none;">
-                        <form th:action="@{/dashboard/ratings}" method="post" style="margin-bottom: 1.5rem;">
+                        <form th:if="${users != null and !users.isEmpty()}" th:action="@{/dashboard/ratings}" method="post" style="margin-bottom: 1.5rem;">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <div class="form-grid">
                                 <div class="form-field">
                                     <label for="rateeUsername">Rate seller</label>
                                     <select id="rateeUsername" name="rateeUsername" required>
-                                        <option value="" disabled selected>Select a user</option>
+                                        <option value="" disabled selected>Select a seller you bought from</option>
                                         <option th:each="user : ${users}" th:value="${user.username}" th:text="${user.username}"></option>
                                     </select>
+                                    <div class="field-helper">Only people who sold you an item appear here.</div>
                                 </div>
                                 <div class="form-field">
                                     <label for="score">Score</label>
@@ -883,5 +994,38 @@
             </div>
         </main>
     </div>
+    <script>
+        (function () {
+            var input = document.getElementById('listingImage');
+            var box = document.getElementById('listingImagePreviewBox');
+            var img = document.getElementById('listingImagePreviewImg');
+            var ph = document.getElementById('listingImagePreviewPlaceholder');
+            if (!input || !box || !img || !ph) {
+                return;
+            }
+            input.addEventListener('change', function () {
+                if (!input.files || input.files.length === 0) {
+                    img.hidden = true;
+                    img.removeAttribute('src');
+                    img.removeAttribute('width');
+                    img.removeAttribute('height');
+                    ph.style.display = '';
+                    box.classList.remove('has-image');
+                    return;
+                }
+                var file = input.files[0];
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    img.hidden = false;
+                    img.removeAttribute('width');
+                    img.removeAttribute('height');
+                    ph.style.display = 'none';
+                    box.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
 </body>
 </html>
