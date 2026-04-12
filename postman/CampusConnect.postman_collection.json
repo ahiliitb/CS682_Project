@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "b2c3d4e5-f6a7-4890-b123-456789abcdef",
     "name": "CampusConnect",
-    "description": "HTTP flows for the CampusConnect Spring Boot app: home, CSRF-aware form login, authenticated dashboard, optional signup, and static IITB highlights JSON.\n\n**Setup:** Import this collection and `CampusConnect.local.postman_environment.json`. Select the environment. Create a user matching `test_username` / `test_password` (or register via the app), then run requests in order.\n\n**Spring Data REST:** `GET /users` exists but returns 302 to login when unauthenticated; use the session from Login after enabling redirects if you need HAL.",
+    "description": "HTTP flows for the CampusConnect Spring Boot app: home, CSRF-aware form login, authenticated dashboard, optional signup, static IITB highlights JSON, and **REST JSON APIs** under `/api/**`.\n\n**Setup:** Import this collection and a `CampusConnect.*.postman_environment.json`. Select the environment.\n\n**REST APIs:** Spring Security requires authentication. Run **02 → 03** (GET login page, POST login) first so Postman stores the session cookie; then run requests in **REST API (JSON)**. Without a session, `/api/*` typically returns **302** to `/login`.\n\n**Spring Data REST:** `GET /users` (HAL) behaves separately from `/api/users` (JSON DTOs).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -206,6 +206,292 @@
         "description": "Spring Data REST exposes `/users` from `UserRepository`; Spring Security redirects anonymous clients (typically 302 to login). After Login (step 03), you get 200 with HAL if authorized."
       },
       "response": []
+    },
+    {
+      "name": "REST API (JSON)",
+      "description": "Controllers: `ItemRestController` → `/api/items`, `UserRestController` → `/api/users`, `AuctionListingRestController` → `/api/auctions`. **Authenticate first** with requests 02–03 so the JSESSIONID cookie is sent.\n\nOptional: set `Accept: application/json` (default for many clients).",
+      "item": [
+        {
+          "name": "Items — GET all active",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () {",
+                  "  const j = pm.response.json();",
+                  "  pm.expect(Array.isArray(j)).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/items",
+            "description": "`ItemRestController#getAllItems` — active listings only."
+          },
+          "response": []
+        },
+        {
+          "name": "Items — GET by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 or 500', function () {",
+                  "  pm.expect([200, 500]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('JSON object with id', function () {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('id');",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/items/{{api_item_id}}",
+            "description": "Replace `api_item_id` in the environment if this id does not exist (server may return 500 with IllegalArgumentException)."
+          },
+          "response": []
+        },
+        {
+          "name": "Items — GET search by name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () { pm.expect(Array.isArray(pm.response.json())).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/items/search?name={{api_search_name}}",
+            "description": "Query param `name` (substring match, case-insensitive)."
+          },
+          "response": []
+        },
+        {
+          "name": "Items — GET by owner username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () { pm.expect(Array.isArray(pm.response.json())).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/items/owner/{{test_username}}",
+            "description": "All items (including inactive) for that owner per repository filter in controller."
+          },
+          "response": []
+        },
+        {
+          "name": "Users — GET all",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () { pm.expect(Array.isArray(pm.response.json())).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/users",
+            "description": "`UserRestController` — list `UserDTO` (id, username, email, role). No passwords."
+          },
+          "response": []
+        },
+        {
+          "name": "Users — GET by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('JSON user', function () { pm.expect(pm.response.json()).to.have.property('username'); });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/users/{{api_user_id}}",
+            "description": "Adjust `api_user_id` in the environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Users — GET by username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('username matches', function () {",
+                  "  pm.expect(pm.response.json().username).to.eql(pm.environment.get('test_username'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/users/username/{{test_username}}",
+            "description": "Path segment: username."
+          },
+          "response": []
+        },
+        {
+          "name": "Users — GET by email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('email matches', function () {",
+                  "  pm.expect(pm.response.json().email).to.eql(pm.environment.get('test_email'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/users/email/{{test_email}}",
+            "description": "Path includes `@`; Postman encodes the request path. Use an email that exists in the DB."
+          },
+          "response": []
+        },
+        {
+          "name": "Auctions — GET all active",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () { pm.expect(Array.isArray(pm.response.json())).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/auctions",
+            "description": "Active auctions only (same filter as `/active`)."
+          },
+          "response": []
+        },
+        {
+          "name": "Auctions — GET active only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () { pm.expect(Array.isArray(pm.response.json())).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/auctions/active",
+            "description": "Explicit active filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Auctions — GET by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('has itemName', function () { pm.expect(pm.response.json()).to.have.property('itemName'); });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/auctions/{{api_auction_id}}",
+            "description": "Set `api_auction_id` in the environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Auctions — GET by seller user id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JSON array', function () { pm.expect(Array.isArray(pm.response.json())).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{base_url}}/api/auctions/seller/{{api_user_id}}",
+            "description": "Path param is **seller user id** (numeric string), per `AuctionListingRestController`. Note: implementation compares to `User.getId()`; use a valid seller id from your DB."
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }

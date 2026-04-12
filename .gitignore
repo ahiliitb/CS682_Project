@@ -41,3 +41,4 @@ node_modules/
 
 ### Python (Selenium scraper) ###
 scripts/selenium_iitb/.venv/
+scripts/selenium_campusconnect/venv/
