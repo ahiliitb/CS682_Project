@@ -132,13 +132,7 @@ Selenium-based UI tests are included for key user flows.
 * Uses **H2 file-based database** → no setup required
 * Data persists locally during runs
 * Only **IITB email format** is accepted for registration (can be modified in code)
-
----
-
-## 📸 Demo
-
-It is deployed at http://51.20.53.218:8501
-
+  
 ---
 
 ## 📈 Future Improvements
