@@ -114,7 +114,9 @@ cd CS682_Project
 ```
 http://localhost:8080
 ```
+📸 Demo
 
+http://51.20.53.218:8501/
 ---
 
 ## 🧪 Running Tests (Optional)
